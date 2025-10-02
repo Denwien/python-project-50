@@ -2,7 +2,7 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Compares two configuration files and shows a difference"
+        description="Compares two configuration files and shows a difference."
     )
 
     # Опции
@@ -32,17 +32,22 @@ def main():
 
     args = parser.parse_args()
 
-    # Если файлы не указаны и не вызвана версия, показать help
+    # Если файлы не указаны, показать help
     if not args.first_file or not args.second_file:
         parser.print_help()
         return
 
-    # Заглушка: пока просто выводим переданные значения
+    # Заглушка
     print(f"Comparing {args.first_file} with {args.second_file}")
     print(f"Output format: {args.format}")
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
 
 
 
