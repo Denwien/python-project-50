@@ -1,19 +1,16 @@
 [project]
-name = "hexlet-code"
+name = "gendiff"
 version = "0.1.0"
-description = "Add your description here"
+description = "Compares two configuration files and shows a difference."
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = []
 
 [project.scripts]
-gendiff = "hexlet_code.scripts.gendiff:main"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+gendiff = "gendiff.scripts.gendiff:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["hexlet_code"]
+packages = ["gendiff"]
+
 
 
