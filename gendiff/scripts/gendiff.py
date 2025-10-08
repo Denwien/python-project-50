@@ -2,78 +2,69 @@ import json
 from pathlib import Path
 import yaml
 
+# Настройка представления булевых значений для YAML
+def bool_representer(dumper, data):
+    return dumper.represent_scalar('tag:yaml.org,2002:bool', str(data).lower())
 
-def read_file(file_path):
-    """Читает JSON или YAML файл и возвращает словарь."""
+yaml.add_representer(bool, bool_representer)
+
+def read_file(file_path: str):
     path = Path(file_path)
+    if not path.exists():
+        raise FileNotFoundError(f"No such file: '{file_path}'")
+
     ext = path.suffix.lower()
+    content = path.read_text(encoding='utf-8')
+    if ext == '.json':
+        return json.loads(content)
+    elif ext in ('.yml', '.yaml'):
+        return yaml.safe_load(content)
+    else:
+        raise ValueError(f"Unsupported file format: {ext}")
 
-    with path.open(encoding="utf-8") as f:
-        if ext == ".json":
-            return json.load(f)
-        elif ext in (".yml", ".yaml"):
-            return yaml.safe_load(f)
+def generate_diff(file_path1: str, file_path2: str) -> str:
+    data1 = read_file(file_path1)
+    data2 = read_file(file_path2)
+    return dict_diff(data1, data2)
+
+def dict_diff(d1, d2, level=0):
+    """Рекурсивное сравнение словарей и формирование строки diff."""
+    diff_lines = []
+    indent = "  " * level
+
+    all_keys = sorted(d1.keys() | d2.keys())
+    for key in all_keys:
+        val1 = d1.get(key, None)
+        val2 = d2.get(key, None)
+
+        if key not in d1:
+            diff_lines.append(f"{indent}+ {key}: {format_value(val2, level + 1)}")
+        elif key not in d2:
+            diff_lines.append(f"{indent}- {key}: {format_value(val1, level + 1)}")
+        elif isinstance(val1, dict) and isinstance(val2, dict):
+            nested = dict_diff(val1, val2, level + 1)
+            diff_lines.append(f"{indent}  {key}: {{\n{nested}\n{indent}  }}")
+        elif val1 != val2:
+            diff_lines.append(f"{indent}- {key}: {format_value(val1, level + 1)}")
+            diff_lines.append(f"{indent}+ {key}: {format_value(val2, level + 1)}")
         else:
-            raise ValueError(f"Unsupported file format: {ext}")
+            diff_lines.append(f"{indent}  {key}: {format_value(val1, level + 1)}")
 
+    return "\n".join(diff_lines)
 
-def build_diff(dict1, dict2):
-    """Сравнивает два словаря и возвращает список изменений."""
-    keys = sorted(dict1.keys() | dict2.keys())
-    diff = []
+def format_value(value, level):
+    """Форматирование значения для вывода в diff."""
+    indent = "  " * level
+    if isinstance(value, dict):
+        lines = []
+        for k, v in value.items():
+            lines.append(f"{indent}  {k}: {format_value(v, level + 1)}")
+        return "{\n" + "\n".join(lines) + f"\n{indent}}}"
+    elif isinstance(value, bool):
+        return str(value).lower()
+    else:
+        return str(value)
 
-    for key in keys:
-        if key not in dict1:
-            diff.append({"key": key, "status": "added", "value": dict2[key]})
-        elif key not in dict2:
-            diff.append({"key": key, "status": "removed", "value": dict1[key]})
-        else:
-            val1, val2 = dict1[key], dict2[key]
-            if isinstance(val1, dict) and isinstance(val2, dict):
-                children = build_diff(val1, val2)
-                diff.append({"key": key, "status": "nested", "children": children})
-            elif val1 == val2:
-                diff.append({"key": key, "status": "unchanged", "value": val1})
-            else:
-                diff.append({
-                    "key": key,
-                    "status": "changed",
-                    "old_value": val1,
-                    "new_value": val2,
-                })
-    return diff
-
-
-def format_diff(diff, depth=0):
-    """Форматирует diff в строку с отступами и префиксами."""
-    indent = "  " * depth
-    lines = ["{"]
-    for item in diff:
-        key = item["key"]
-        status = item["status"]
-
-        if status == "added":
-            lines.append(f"{indent}  + {key}: {item['value']}")
-        elif status == "removed":
-            lines.append(f"{indent}  - {key}: {item['value']}")
-        elif status == "unchanged":
-            lines.append(f"{indent}    {key}: {item['value']}")
-        elif status == "changed":
-            lines.append(f"{indent}  - {key}: {item['old_value']}")
-            lines.append(f"{indent}  + {key}: {item['new_value']}")
-        elif status == "nested":
-            children_str = format_diff(item["children"], depth + 2)
-            lines.append(f"{indent}    {key}: {children_str}")
-    lines.append(f"{indent}}}")
-    return "\n".join(lines)
-
-
-def generate_diff(file_path1, file_path2):
-    """Основная функция для генерации diff двух файлов."""
-    dict1 = read_file(file_path1)
-    dict2 = read_file(file_path2)
-    diff = build_diff(dict1, dict2)
-    return format_diff(diff)
 
 
 
