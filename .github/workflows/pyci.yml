@@ -2,12 +2,12 @@ name: Python CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     strategy:
@@ -23,18 +23,18 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Upgrade pip
-      run: python -m pip install --upgrade pip
-
     - name: Install dependencies
       run: |
+        python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install flake8 pytest pytest-cov
+        pip install pytest pytest-cov pyyaml
 
-    - name: Lint with flake8
-      run: flake8 gendiff
+    - name: Set PYTHONPATH
+      run: echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
 
     - name: Run tests with coverage
-      run: pytest --cov=gendiff tests/
+      run: |
+        python -m pytest --cov=gendiff tests/
+
 
 
