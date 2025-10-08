@@ -11,36 +11,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Клонируем репозиторий
       - uses: actions/checkout@v4
 
-      # Настраиваем Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      # Установка зависимостей
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Запуск линтера
-      - name: Lint
-        run: make lint
+      - name: Run linter and tests
+        run: |
+          make check
 
-      # Запуск тестов с покрытием
-      - name: Run tests
-        run: pytest --cov=gendiff
+      - name: Run test coverage
+        run: |
+          make test-coverage
 
-      # Запуск SonarQube сканирования
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=your_project_key
-            -Dsonar.organization=your_organization
+            -Dsonar.projectKey=python-project-50
+            -Dsonar.organization=hexlet-boilerplates
             -Dsonar.python.coverage.reportPaths=coverage.xml
