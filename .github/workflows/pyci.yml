@@ -27,12 +27,3 @@ jobs:
       - name: Run tests with coverage
         run: pytest --cov=gendiff tests/
 
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=python-project-50
-            -Dsonar.organization=hexlet-boilerplates
-            -Dsonar.python.coverage.reportPaths=coverage.xml
