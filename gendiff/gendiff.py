@@ -1,18 +1,30 @@
-import json
-import yaml
+from gendiff.formaters.stylish import format_diff_stylish
 
-def load_file(filepath):
-    """Загружает JSON или YAML файл и возвращает словарь."""
-    with open(filepath) as f:
-        if filepath.endswith('.json'):
-            return json.load(f)
-        elif filepath.endswith(('.yml', '.yaml')):
-            return yaml.safe_load(f)
-        else:
-            raise ValueError("Unsupported file format")
+def generate_diff(file_path1, file_path2, format_name='stylish'):
+    """Генерация diff между двумя файлами."""
+    import json
+    import os
+
+    # Чтение файлов
+    if not os.path.exists(file_path1) or not os.path.exists(file_path2):
+        raise FileNotFoundError("Один из файлов не найден")
+
+    with open(file_path1) as f1, open(file_path2) as f2:
+        data1 = json.load(f1)
+        data2 = json.load(f2)
+
+    # Генерация diff
+    diff_list = build_diff(data1, data2)
+    
+    # Форматирование
+    if format_name == 'stylish':
+        return format_diff_stylish(diff_list)
+    else:
+        raise ValueError(f"Unknown format: {format_name}")
+
 
 def build_diff(data1, data2):
-    """Рекурсивно строит список изменений."""
+    """Создание списка изменений между двумя словарями."""
     keys = sorted(set(data1.keys()) | set(data2.keys()))
     diff = []
 
@@ -21,28 +33,15 @@ def build_diff(data1, data2):
             diff.append({"name": key, "action": "added", "value": data2[key]})
         elif key not in data2:
             diff.append({"name": key, "action": "deleted", "value": data1[key]})
+        elif isinstance(data1[key], dict) and isinstance(data2[key], dict):
+            diff.append({"name": key, "action": "nested", "children": build_diff(data1[key], data2[key])})
+        elif data1[key] != data2[key]:
+            diff.append({"name": key, "action": "deleted", "value": data1[key]})
+            diff.append({"name": key, "action": "added", "value": data2[key]})
         else:
-            val1 = data1[key]
-            val2 = data2[key]
-            if isinstance(val1, dict) and isinstance(val2, dict):
-                children = build_diff(val1, val2)
-                diff.append({"name": key, "action": "nested", "children": children})
-            elif val1 != val2:
-                diff.append({"name": key, "action": "modified", "old_value": val1, "new_value": val2})
-            else:
-                diff.append({"name": key, "action": "unchanged", "value": val1})
+            diff.append({"name": key, "action": "unchanged", "value": data1[key]})
+
     return diff
 
-def generate_diff(file1, file2, format_name="stylish"):
-    """Главная функция генерации diff."""
-    data1 = load_file(file1)
-    data2 = load_file(file2)
-    diff_list = build_diff(data1, data2)
-
-    if format_name == "stylish":
-        from gendiff.formaters.stylish import format_diff_stylish
-        return format_diff_stylish(diff_list)
-    else:
-        raise ValueError("Unknown format")
 
 

@@ -1,17 +1,17 @@
-SEPARATOR = " "
-ADD = '+ '
-DEL = '- '
-NONE = '  '
+SEPARATOR = "  "
+ADD = "+ "
+DEL = "- "
+NONE = "  "
 
 
 def format_value(value, depth):
     """Форматирование значения с учётом отступов."""
     if isinstance(value, dict):
         lines = []
-        indent = SEPARATOR * (depth + 2)
-        closing_indent = SEPARATOR * depth
+        indent = SEPARATOR * (depth + 1)
         for k, v in value.items():
-            lines.append(f"{indent}{k}: {format_value(v, depth + 2)}")
+            lines.append(f"{indent}{k}: {format_value(v, depth + 1)}")
+        closing_indent = SEPARATOR * depth
         return "{\n" + "\n".join(lines) + f"\n{closing_indent}}}"
     if value is None:
         return "null"
@@ -21,36 +21,37 @@ def format_value(value, depth):
 
 
 def make_stylish(diff, depth=0):
-    """Рекурсивное форматирование списка изменений в стиле stylish."""
     lines = []
     indent = SEPARATOR * depth
+
     for node in diff:
         key = node["name"]
         action = node["action"]
 
         if action == "nested":
             children = make_stylish(node["children"], depth + 2)
-            lines.append(f"{indent}{NONE}{key}: {{\n{children}\n{indent}{NONE}}}")
+            lines.append(f"{indent}  {key}: {{\n{children}\n{indent}  }}")
         elif action == "added":
-            value = format_value(node["value"], depth + 2)
-            lines.append(f"{indent}{ADD}{key}: {value}")
+            value = format_value(node["value"], depth + 1)
+            lines.append(f"{indent}+ {key}: {value}")
         elif action == "deleted":
-            value = format_value(node["value"], depth + 2)
-            lines.append(f"{indent}{DEL}{key}: {value}")
-        elif action == "unchanged":
-            value = format_value(node["value"], depth + 2)
-            lines.append(f"{indent}{NONE}{key}: {value}")
-        elif action == "modified":
-            old_value = format_value(node["old_value"], depth + 2)
-            new_value = format_value(node["new_value"], depth + 2)
-            lines.append(f"{indent}{DEL}{key}: {old_value}")
-            lines.append(f"{indent}{ADD}{key}: {new_value}")
+            value = format_value(node["value"], depth + 1)
+            lines.append(f"{indent}- {key}: {value}")
+        else:  # unchanged
+            value = format_value(node["value"], depth + 1)
+            lines.append(f"{indent}  {key}: {value}")
+
     return "\n".join(lines)
 
 
 def format_diff_stylish(diff):
     """Форматирование diff в стиль stylish для верхнего уровня."""
-    return make_stylish(diff)
+    return make_stylish(diff, depth=0)
+
+
+
+
+
 
 
 
