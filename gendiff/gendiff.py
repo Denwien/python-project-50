@@ -1,7 +1,7 @@
 import os
 import json
 import yaml
-from gendiff.formaters.stylish import format_stylish
+from gendiff.formaters.stylish import format_diff_stylish as format_stylish
 
 def load_file(filepath):
     """Загружает JSON или YAML файл и возвращает словарь."""
@@ -49,7 +49,7 @@ def dict_to_list_diff(diff_dict):
         elif status == 'deleted':
             result.append({'name': key, 'action': 'deleted', 'old_value': info['value']})
         elif status == 'modified':
-            result.append({'name': key, 'action': 'modified', 
+            result.append({'name': key, 'action': 'modified',
                            'old_value': info['old_value'], 'new_value': info['value']})
         else:  # unchanged
             result.append({'name': key, 'action': 'unchanged', 'value': info['value']})
@@ -67,3 +67,4 @@ def generate_diff(file1, file2, format_name='stylish'):
         return format_stylish(diff_list)
     else:
         raise ValueError(f"Unsupported format: {format_name}")
+
