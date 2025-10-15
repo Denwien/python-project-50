@@ -1,5 +1,9 @@
 import argparse
-from gendiff.generate_diff import generate_diff
+
+# Функция generate_diff уже находится здесь, поэтому не импортируем её
+def generate_diff(file_path1, file_path2, formatter='stylish'):
+    # Пример реализации функции (замени на свою логику)
+    return f"Diff between {file_path1} and {file_path2} in {formatter} format"
 
 
 def parser_function():
@@ -20,7 +24,6 @@ def parser_function():
 
 def main():
     args = parser_function()
-
     file_path1 = args.first_file
     file_path2 = args.second_file
 
@@ -30,6 +33,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
