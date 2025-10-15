@@ -1,70 +1,48 @@
-import os
 import json
 import yaml
-from gendiff.formaters.stylish import format_diff_stylish as format_stylish
 
 def load_file(filepath):
     """Загружает JSON или YAML файл и возвращает словарь."""
-    if not os.path.exists(filepath):
-        raise FileNotFoundError(f"File not found: {filepath}")
-
-    with open(filepath, 'r', encoding='utf-8') as f:
+    with open(filepath) as f:
         if filepath.endswith('.json'):
             return json.load(f)
         elif filepath.endswith(('.yml', '.yaml')):
             return yaml.safe_load(f)
         else:
-            raise ValueError("Unsupported file format: must be .json, .yml or .yaml")
+            raise ValueError("Unsupported file format")
 
-
-def build_diff(dict1, dict2):
-    """Строит промежуточный словарь diff с ключами и статусами."""
-    keys = sorted(set(dict1.keys()) | set(dict2.keys()))
-    diff = {}
+def build_diff(data1, data2):
+    """Рекурсивно строит список изменений."""
+    keys = sorted(set(data1.keys()) | set(data2.keys()))
+    diff = []
 
     for key in keys:
-        if key not in dict1:
-            diff[key] = {'status': 'added', 'value': dict2[key]}
-        elif key not in dict2:
-            diff[key] = {'status': 'deleted', 'value': dict1[key]}
-        elif isinstance(dict1[key], dict) and isinstance(dict2[key], dict):
-            diff[key] = {'status': 'nested', 'value': build_diff(dict1[key], dict2[key])}
-        elif dict1[key] != dict2[key]:
-            diff[key] = {'status': 'modified', 'old_value': dict1[key], 'value': dict2[key]}
+        if key not in data1:
+            diff.append({"name": key, "action": "added", "value": data2[key]})
+        elif key not in data2:
+            diff.append({"name": key, "action": "deleted", "value": data1[key]})
         else:
-            diff[key] = {'status': 'unchanged', 'value': dict1[key]}
+            val1 = data1[key]
+            val2 = data2[key]
+            if isinstance(val1, dict) and isinstance(val2, dict):
+                children = build_diff(val1, val2)
+                diff.append({"name": key, "action": "nested", "children": children})
+            elif val1 != val2:
+                diff.append({"name": key, "action": "modified", "old_value": val1, "new_value": val2})
+            else:
+                diff.append({"name": key, "action": "unchanged", "value": val1})
     return diff
 
+def generate_diff(file1, file2, format_name="stylish"):
+    """Главная функция генерации diff."""
+    data1 = load_file(file1)
+    data2 = load_file(file2)
+    diff_list = build_diff(data1, data2)
 
-def dict_to_list_diff(diff_dict):
-    """Конвертирует словарь diff в список словарей для make_stylish_diff."""
-    result = []
-    for key, info in sorted(diff_dict.items()):
-        status = info['status']
-        if status == 'nested':
-            children = dict_to_list_diff(info['value'])
-            result.append({'name': key, 'action': 'nested', 'children': children})
-        elif status == 'added':
-            result.append({'name': key, 'action': 'added', 'value': info['value']})
-        elif status == 'deleted':
-            result.append({'name': key, 'action': 'deleted', 'old_value': info['value']})
-        elif status == 'modified':
-            result.append({'name': key, 'action': 'modified',
-                           'old_value': info['old_value'], 'new_value': info['value']})
-        else:  # unchanged
-            result.append({'name': key, 'action': 'unchanged', 'value': info['value']})
-    return result
-
-
-def generate_diff(file1, file2, format_name='stylish'):
-    """Генерирует diff между двумя файлами в заданном формате."""
-    dict1 = load_file(file1)
-    dict2 = load_file(file2)
-    diff_dict = build_diff(dict1, dict2)
-    diff_list = dict_to_list_diff(diff_dict)
-
-    if format_name == 'stylish':
-        return format_stylish(diff_list)
+    if format_name == "stylish":
+        from gendiff.formaters.stylish import format_diff_stylish
+        return format_diff_stylish(diff_list)
     else:
-        raise ValueError(f"Unsupported format: {format_name}")
+        raise ValueError("Unknown format")
+
 
