@@ -9,44 +9,28 @@ def format_value(value):
     return value
 
 
-def generate_diff(file_path1, file_path2):
-    with open(file_path1) as f1, open(file_path2) as f2:
-        data1 = yaml.safe_load(f1) or {}
-        data2 = yaml.safe_load(f2) or {}
+def generate_diff(file_path1, file_path2, format_name='stylish'):
+    data1 = load_file(file_path1)
+    data2 = load_file(file_path2)
 
     all_keys = sorted(set(data1.keys()) | set(data2.keys()))
     diff_lines = []
-    unchanged_block = []
 
     for key in all_keys:
         val1 = data1.get(key)
         val2 = data2.get(key)
 
-        if val1 == val2:
-            unchanged_block.append(f"{key}: {format_value(val1)}")
+        if key in data1 and key not in data2:
+            diff_lines.append(f"  - {key}: {format_value(val1)}")
+        elif key not in data1 and key in data2:
+            diff_lines.append(f"  + {key}: {format_value(val2)}")
+        elif val1 == val2:
+            diff_lines.append(f"    {key}: {format_value(val1)}")
         else:
-            # добавляем предыдущий блок неизменных ключей, если есть
-            if unchanged_block:
-                diff_lines.append("- " + unchanged_block[0])
-                for line in unchanged_block[1:]:
-                    diff_lines.append("  " + line)
-                unchanged_block = []
+            diff_lines.append(f"  - {key}: {format_value(val1)}")
+            diff_lines.append(f"  + {key}: {format_value(val2)}")
 
-            if key in data1 and key not in data2:
-                diff_lines.append(f"- {key}: {format_value(val1)}")
-            elif key not in data1 and key in data2:
-                diff_lines.append(f"+ {key}: {format_value(val2)}")
-            else:  # ключ есть в обоих, но значения разные
-                diff_lines.append(f"- {key}: {format_value(val1)}")
-                diff_lines.append(f"+ {key}: {format_value(val2)}")
-
-    # добавляем оставшийся блок неизменных ключей
-    if unchanged_block:
-        diff_lines.append("- " + unchanged_block[0])
-        for line in unchanged_block[1:]:
-            diff_lines.append("  " + line)
-
-    return "{\n  " + "\n  ".join(diff_lines) + "\n}"
+    return "{\n" + "\n".join(diff_lines) + "\n}"
 
 
 def parser_function():
