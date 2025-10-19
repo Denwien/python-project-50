@@ -30,7 +30,7 @@ def generate_diff(file_path1, file_path2, format_name='stylish'):
             diff_lines.append(f"  - {key}: {format_value(val1)}")
             diff_lines.append(f"  + {key}: {format_value(val2)}")
 
-    return "{\n" + "\n".join(diff_lines) + "\n}"
+    return "\n" + "\n".join(diff_lines) + "\n"
 
 
 def parser_function():
