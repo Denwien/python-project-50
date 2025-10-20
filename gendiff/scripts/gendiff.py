@@ -1,72 +1,37 @@
-import yaml
 import json
-from pathlib import Path
+from gendiff.formaters.stylish import format_diff_stylish
 
-def format_value(value):
-    """Форматирование значения для diff."""
-    if isinstance(value, bool):
-        return str(value).lower()
-    if value is None:
-        return "null"
-    return str(value)
+def load_file(path):
+    """Загружает JSON-файл (добавьте YAML при необходимости)."""
+    with open(path) as f:
+        if path.endswith('.json'):
+            return json.load(f)
+        raise ValueError("Unsupported file type")
 
-def load_file(file_path):
-    """Загружает YAML или JSON файл и возвращает словарь."""
-    path = Path(file_path)
-    if not path.exists():
-        raise FileNotFoundError(f"File {file_path} does not exist")
-    if path.suffix in (".yml", ".yaml"):
-        with open(path) as f:
-            return yaml.safe_load(f) or {}
-    elif path.suffix == ".json":
-        with open(path) as f:
-            return json.load(f) or {}
-    else:
-        raise ValueError("Unsupported file format. Only JSON and YAML are supported.")
-
-def generate_diff(file_path1, file_path2):
-    """Генерация diff между двумя файлами в формате stylish."""
-    data1 = load_file(file_path1)
-    data2 = load_file(file_path2)
-
-    all_keys = sorted(set(data1.keys()) | set(data2.keys()))
-    diff_lines = []
-    unchanged_block = []
-
-    for key in all_keys:
+def build_diff(data1, data2):
+    """Рекурсивно строит список изменений между двумя словарями."""
+    diff = []
+    keys = sorted(data1.keys() | data2.keys())
+    for key in keys:
         val1 = data1.get(key)
         val2 = data2.get(key)
-
-        if val1 == val2:
-            unchanged_block.append(f"{key}: {format_value(val1)}")
+        if key not in data1:
+            diff.append({"name": key, "action": "added", "value": val2, "children": []})
+        elif key not in data2:
+            diff.append({"name": key, "action": "deleted", "value": val1, "children": []})
+        elif isinstance(val1, dict) and isinstance(val2, dict):
+            diff.append({"name": key, "action": "nested", "value": None, "children": build_diff(val1, val2)})
+        elif val1 != val2:
+            diff.append({"name": key, "action": "deleted", "value": val1, "children": []})
+            diff.append({"name": key, "action": "added", "value": val2, "children": []})
         else:
-            # добавляем предыдущий блок неизменных ключей, если есть
-            if unchanged_block:
-                diff_lines.append("- " + unchanged_block[0])
-                for line in unchanged_block[1:]:
-                    diff_lines.append("  " + line)
-                unchanged_block = []
+            diff.append({"name": key, "action": "unchanged", "value": val1, "children": []})
+    return diff
 
-            if key in data1 and key not in data2:
-                diff_lines.append(f"- {key}: {format_value(val1)}")
-            elif key not in data1 and key in data2:
-                diff_lines.append(f"+ {key}: {format_value(val2)}")
-            else:  # ключ есть в обоих, но значения разные
-                diff_lines.append(f"- {key}: {format_value(val1)}")
-                diff_lines.append(f"+ {key}: {format_value(val2)}")
-
-    # добавляем оставшийся блок неизменных ключей
-    if unchanged_block:
-        diff_lines.append("- " + unchanged_block[0])
-        for line in unchanged_block[1:]:
-            diff_lines.append("  " + line)
-
-    return "{\n  " + "\n  ".join(diff_lines) + "\n}"
-
-
-
-
-
-
-
-
+def generate_diff(file1, file2, format_name='stylish'):
+    data1 = load_file(file1)
+    data2 = load_file(file2)
+    diff = build_diff(data1, data2)
+    if format_name == 'stylish':
+        return format_diff_stylish(diff)
+    return diff
