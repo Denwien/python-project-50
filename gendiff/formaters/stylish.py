@@ -20,9 +20,9 @@ def format_value(value, depth):
     return str(value)
 
 
-def make_stylish(diff, depth=0):
+def make_stylish(diff, depth=1):
     lines = []
-    indent = SEPARATOR * (depth + 1)
+    indent = SEPARATOR * depth
 
     for node in diff:
         key = node["name"]
@@ -30,7 +30,7 @@ def make_stylish(diff, depth=0):
 
         if action == "nested":
             children = make_stylish(node["children"], depth + 2)
-            lines.append(f"{indent}{key}:{children}")
+            lines.append(f"{indent}  {key}: {{\n{children}\n{indent}  }}")
         elif action == "added":
             value = format_value(node["value"], depth + 1)
             lines.append(f"{indent}+ {key}: {value}")
@@ -41,13 +41,8 @@ def make_stylish(diff, depth=0):
             value = format_value(node["value"], depth + 1)
             lines.append(f"{indent}  {key}: {value}")
 
-    result = "\n".join(lines)
-    return f"\n{result}"
+    return "\n".join(lines)
 
-
-def format_diff_stylish(diff):
-    """Форматирование diff в стиль stylish для верхнего уровня."""
-    return f"{{{make_stylish(diff, depth=0)}\n}}"
 
 
 
