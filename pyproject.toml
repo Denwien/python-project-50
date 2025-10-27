@@ -4,7 +4,12 @@ version = "0.1.0"
 description = "Compares two configuration files and shows a difference."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "pytest>=8.4.1",
+    "pytest-cov>=7.0.0",
+    "pyyaml>=6.0.3",
+    "ruff>=0.12.9",
+]
 
 [project.scripts]
 gendiff = "gendiff.scripts.gendiff:main"
