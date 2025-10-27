@@ -1,12 +1,30 @@
-.PHONY: lint test test-coverage check
+install:
+	uv sync
 
-lint:
-	flake8 gendiff
+run:
+	uv run gendiff
 
 test:
-	pytest tests/
+	uv run pytest
 
 test-coverage:
-	pytest --cov=gendiff tests/
+	uv run pytest --cov=gendiff --cov-report=xml:coverage.xml
 
-check: lint test-coverage
+lint:
+	uv run ruff check gendiff
+
+check: test lint
+
+build:
+	uv build
+
+package-install:
+	uv tool install dist/*.whl
+
+reinstall:
+	uv tool install --force dist/*.whl
+
+uninstall:
+	uv tool uninstall hexlet-code
+
+.PHONY: install test lint selfcheck check build package-install reinstall uninstall
