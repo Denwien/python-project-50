@@ -17,8 +17,10 @@ def format_value(value, depth):
 
 
 def make_stylish(diff, depth=0):
+    """Convert diff to stylish format with correct indentation."""
     lines = []
     indent = '' if depth == 0 else SEPARATOR * depth
+
     for node in diff:
         key = node['name']
         action = node['action']
@@ -28,20 +30,20 @@ def make_stylish(diff, depth=0):
             lines.extend(make_stylish(node['children'], depth + 1))
 
         elif action == 'added':
-            value = format_value(node['value'], depth)
+            value = format_value(node['value'], depth + 1)
             lines.append(f"{indent}{ADD}{key}: {value}")
 
         elif action == 'deleted':
-            value = format_value(node['value'], depth)
+            value = format_value(node['value'], depth + 1)
             lines.append(f"{indent}{DEL}{key}: {value}")
 
         elif action == 'unchanged':
-            value = format_value(node['value'], depth)
+            value = format_value(node['value'], depth + 1)
             lines.append(f"{indent}{UNCHANGED}{key}: {value}")
 
         elif action == 'changed':
-            old_val = format_value(node['old_value'], depth)
-            new_val = format_value(node['new_value'], depth)
+            old_val = format_value(node['old_value'], depth + 1)
+            new_val = format_value(node['new_value'], depth + 1)
             lines.append(f"{indent}{DEL}{key}: {old_val}")
             lines.append(f"{indent}{ADD}{key}: {new_val}")
 
@@ -50,3 +52,5 @@ def make_stylish(diff, depth=0):
 
 def format_diff_stylish(diff):
     return '\n'.join(make_stylish(diff))
+
+
