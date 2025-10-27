@@ -1,9 +1,0 @@
-Metadata-Version: 2.4
-Name: gendiff
-Version: 0.1.0
-Summary: Compares two configuration files and shows a difference.
-Requires-Python: >=3.10
-Description-Content-Type: text/markdown
-
-### Hexlet tests and linter status:
-[![Actions Status](https://github.com/Denwien/python-project-50/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/Denwien/python-project-50/actions)
