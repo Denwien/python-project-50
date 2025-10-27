@@ -22,19 +22,31 @@ def make_stylish(diff, depth=0):
     for node in diff:
         key = node['name']
         action = node['action']
+
         if action == 'nested':
             lines.append(f"{indent}{UNCHANGED}{key}:")
             lines.extend(make_stylish(node['children'], depth + 1))
+
         elif action == 'added':
             value = format_value(node['value'], depth)
             lines.append(f"{indent}{ADD}{key}: {value}")
+
         elif action == 'deleted':
             value = format_value(node['value'], depth)
             lines.append(f"{indent}{DEL}{key}: {value}")
-        else:  # unchanged
+
+        elif action == 'unchanged':
             value = format_value(node['value'], depth)
             lines.append(f"{indent}{UNCHANGED}{key}: {value}")
+
+        elif action == 'changed':
+            old_val = format_value(node['old_value'], depth)
+            new_val = format_value(node['new_value'], depth)
+            lines.append(f"{indent}{DEL}{key}: {old_val}")
+            lines.append(f"{indent}{ADD}{key}: {new_val}")
+
     return lines
+
 
 def format_diff_stylish(diff):
     return '\n'.join(make_stylish(diff))
