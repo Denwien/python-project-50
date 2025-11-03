@@ -1,52 +1,17 @@
-def build_diff(data1, data2):
-    diff_lines = []
-    all_keys = sorted(set(data1.keys()) | set(data2.keys()))
+def build_diff(data1: dict, data2: dict) -> dict:
+    keys = sorted(data1.keys() | data2.keys())
+    diff = {}
 
-    for key in all_keys:
-        val1 = data1.get(key)
-        val2 = data2.get(key)
-
+    for key in keys:
         if key not in data1:
-            diff_lines.append({
-                "name": key,
-                "action": "added",
-                "value": val2,
-                "children": []
-            })
+            diff[key] = {"status": "added", "value": data2[key]}
         elif key not in data2:
-            diff_lines.append({
-                "name": key,
-                "action": "deleted",
-                "value": val1,
-                "children": []
-            })
-        elif isinstance(val1, dict) and isinstance(val2, dict):
-            diff_lines.append({
-                "name": key,
-                "action": "nested",
-                "children": build_diff(val1, val2)
-            })
-        elif val1 == val2:
-            diff_lines.append({
-                "name": key,
-                "action": "unchanged",
-                "value": val1,
-                "children": []
-            })
+            diff[key] = {"status": "removed", "value": data1[key]}
+        elif isinstance(data1[key], dict) and isinstance(data2[key], dict):
+            diff[key] = {"status": "nested", "children": build_diff(data1[key], data2[key])}
+        elif data1[key] != data2[key]:
+            diff[key] = {"status": "updated", "old_value": data1[key], "new_value": data2[key]}
         else:
-            diff_lines.append({
-                "name": key,
-                "action": "changed",
-                "old_value": val1,
-                "new_value": val2,
-                "children": []
-            })
-
-    return diff_lines
-
-
-
-
-
-
+            diff[key] = {"status": "unchanged", "value": data1[key]}
+    return diff
 
