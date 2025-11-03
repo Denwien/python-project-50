@@ -1,18 +1,10 @@
-from gendiff.parser import load_file
-from gendiff.builder import build_diff
-from gendiff.formaters.stylish import format_diff_stylish
-from gendiff.formaters.plain import format_diff_plain
+from gendiff.formatters.format_identifier import format_identifier
+from gendiff.scripts.find_diff import find_diff
+from gendiff.scripts.parser import parse_data_from_file
 
-def generate_diff(file_path1: str, file_path2: str, format_name: str = "stylish") -> str:
-    data1 = load_file(file_path1)
-    data2 = load_file(file_path2)
 
-    diff_tree = build_diff(data1, data2)
-
-    if format_name == "stylish":
-        return format_diff_stylish(diff_tree)
-    elif format_name == "plain":
-        return format_diff_plain(diff_tree)
-    else:
-        # возвращаем raw diff для отладки или других форматов
-        return diff_tree
+def generate_diff(file_path1, file_path2, formatter='stylish'):
+    first_file = parse_data_from_file(file_path1)
+    second_file = parse_data_from_file(file_path2)
+    diff = find_diff(first_file, second_file)
+    return format_identifier(diff, formatter)
