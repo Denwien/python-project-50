@@ -1,28 +1,29 @@
-def format_diff_plain(diff, path=""):
+def format_value_plain(value):
+    if isinstance(value, dict):
+        return '[complex value]'
+    if value is None:
+        return 'null'
+    if isinstance(value, bool):
+        return str(value).lower()
+    if isinstance(value, str):
+        return f"'{value}'"
+    return str(value)
+
+def format_diff_plain(diff, parent=''):
     lines = []
+    for key, item in diff.items():
+        full_path = f"{parent}.{key}" if parent else key
+        action = item['action']
 
-    def stringify(value):
-        if isinstance(value, dict):
-            return "[complex value]"
-        if isinstance(value, str):
-            return f"'{value}'"
-        if value is None:
-            return "null"
-        return str(value).lower() if isinstance(value, bool) else str(value)
-
-    for key, info in diff.items():
-        property_path = f"{path}.{key}" if path else key
-        status = info["status"]
-        if status == "nested":
-            lines.extend(format_diff_plain(info["children"], property_path))
-        elif status == "added":
-            lines.append(f"Property '{property_path}' was added with value: {stringify(info['value'])}")
-        elif status == "removed":
-            lines.append(f"Property '{property_path}' was removed")
-        elif status == "updated":
-            old = stringify(info["old_value"])
-            new = stringify(info["new_value"])
-            lines.append(f"Property '{property_path}' was updated. From {old} to {new}")
-    return lines if path else "\n".join(lines)
-
-    
+        if action == 'added':
+            value = format_value_plain(item['value'])
+            lines.append(f"Property '{full_path}' was added with value: {value}")
+        elif action == 'deleted':
+            lines.append(f"Property '{full_path}' was removed")
+        elif action == 'modified':
+            old_val = format_value_plain(item['old_value'])
+            new_val = format_value_plain(item['new_value'])
+            lines.append(f"Property '{full_path}' was updated. From {old_val} to {new_val}")
+        elif action == 'nested':
+            lines.extend(format_diff_plain(item['children'], full_path))
+    return '\n'.join(lines)

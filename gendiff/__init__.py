@@ -11,7 +11,8 @@ def generate_diff(file_path1: str, file_path2: str, format_name: str = "stylish"
 
     if format_name == "stylish":
         return format_diff_stylish(diff_tree)
-    if format_name == "plain":
+    elif format_name == "plain":
         return format_diff_plain(diff_tree)
-    return diff_tree
-
+    else:
+        # возвращаем raw diff для отладки или других форматов
+        return diff_tree

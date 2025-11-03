@@ -1,14 +1,13 @@
 import json
 import yaml
-from pathlib import Path
 
 def load_file(file_path: str):
-    path = Path(file_path)
-    ext = path.suffix.lower()
-
-    with open(file_path, "r") as f:
-        if ext in [".json"]:
+    """Загружает JSON или YAML файл в словарь."""
+    if file_path.endswith('.json'):
+        with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
-        if ext in [".yaml", ".yml"]:
+    elif file_path.endswith(('.yml', '.yaml')):
+        with open(file_path, 'r', encoding='utf-8') as f:
             return yaml.safe_load(f)
-        raise ValueError(f"Unsupported file format: {ext}")
+    else:
+        raise ValueError(f"Unsupported file format: {file_path}")
