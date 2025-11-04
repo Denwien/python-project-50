@@ -1,5 +1,4 @@
-from gendiff.formaters import stylish, plain, json as json_format
-
+from gendiff.formaters import stylish, plain, json
 
 def format_identifier(diff, formatter='stylish'):
     if formatter == 'stylish':
@@ -7,6 +6,5 @@ def format_identifier(diff, formatter='stylish'):
     elif formatter == 'plain':
         return plain.format_diff_plain(diff)
     elif formatter == 'json':
-        return json_format.format_diff_json(diff)
-    else:
-        raise ValueError(f"Unknown formatter: {formatter}")
+        return json.format_diff_json(diff)
+    raise ValueError(f"Unknown format: {formatter}")
