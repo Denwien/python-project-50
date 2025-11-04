@@ -8,10 +8,17 @@ def format_diff_json(diff):
             action = item['action']
             if action == 'nested':
                 result[name] = serialize(item['children'])
+            elif action == 'added':
+                result[name] = item['value']
+            elif action == 'deleted':
+                result[name] = None
             elif action == 'changed':
-                result[name] = item['new_value']
-            else:
-                result[name] = item.get('value')
+                result[name] = {
+                    'old_value': item['old_value'],
+                    'new_value': item['new_value']
+                }
+            else:  # unchanged
+                result[name] = item['value']
         return result
 
     return json.dumps(serialize(diff), indent=4)

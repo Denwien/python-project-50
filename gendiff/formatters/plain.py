@@ -1,50 +1,33 @@
-def format_value(value):
-    if isinstance(value, (dict, list)):
+def format_value_plain(value):
+    if isinstance(value, dict):
         return '[complex value]'
-    elif value is None:
+    if value is None:
         return 'null'
-    elif isinstance(value, bool):
-        return str(value).lower()
-    elif isinstance(value, str):
+    if isinstance(value, bool):
+        return 'true' if value else 'false'
+    if isinstance(value, str):
         return f"'{value}'"
-    else:
-        return str(value)
+    return str(value)
 
 
-def make_plain_item(item, path=''):
-    key = item.get('name')
-    action = item.get('action')
-    new_value = format_value(item.get('new_value'))
-    old_value = format_value(item.get('old_value'))
-    current_path = f"{path}.{key}" if path else key
+def format_diff_plain(diff, path=''):
+    lines = []
 
-    ADD = ' was added with value: '
-    REMOVE = ' was removed'
-    UPD = ' was updated. From '
-    UPD2 = ' to '
-    PROP = 'Property '
-
-    if action == 'added':
-        return f"{PROP}'{current_path}'{ADD}{new_value}"
-    if action == 'deleted':
-        return f"{PROP}'{current_path}'{REMOVE}"
-    if action == 'modified':
-        return f"{PROP}'{current_path}'{UPD}{old_value}{UPD2}{new_value}"
-    if action == 'nested':
-        children = item.get('children')
-        return make_plain_diff(children, current_path)
-    return None
-
-
-def make_plain_diff(diff, path=''):
-    result = []
     for item in diff:
-        formatted_item = make_plain_item(item, path)
-        if formatted_item is not None:
-            result.append(formatted_item)
+        name = item['name']
+        action = item['action']
+        property_path = f"{path}.{name}" if path else name
 
-    return '\n'.join(result)
+        if action == 'nested':
+            lines.extend(format_diff_plain(item['children'], property_path))
+        elif action == 'added':
+            value = format_value_plain(item['value'])
+            lines.append(f"Property '{property_path}' was added with value: {value}")
+        elif action == 'deleted':
+            lines.append(f"Property '{property_path}' was removed")
+        elif action == 'changed':
+            old_val = format_value_plain(item['old_value'])
+            new_val = format_value_plain(item['new_value'])
+            lines.append(f"Property '{property_path}' was updated. From {old_val} to {new_val}")
 
-
-def format_diff_plain(diff):
-    return make_plain_diff(diff)
+    return '\n'.join(lines)
