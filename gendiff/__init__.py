@@ -1,4 +1,4 @@
-from gendiff.formaters.format_identifier import format_identifier
+from gendiff.formatters.format_identifier import format_identifier
 from gendiff.scripts.find_diff import find_diff
 from gendiff.parser import parse_data_from_file
 
