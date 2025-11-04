@@ -1,33 +1,38 @@
-def format_value_plain(value):
-    if isinstance(value, dict):
-        return '[complex value]'
-    if value is None:
-        return 'null'
-    if isinstance(value, bool):
-        return 'true' if value else 'false'
-    if isinstance(value, str):
-        return f"'{value}'"
-    return str(value)
+def format_plain(diff_tree):
+    """
+    Форматирует дерево изменений в plain.
+    """
+    def stringify(value):
+        if isinstance(value, dict) or isinstance(value, list):
+            return '[complex value]'
+        elif isinstance(value, str):
+            return f"'{value}'"
+        elif value is None:
+            return 'null'
+        elif isinstance(value, bool):
+            return str(value).lower()
+        return str(value)
 
-
-def format_diff_plain(diff, path=''):
     lines = []
 
-    for item in diff:
-        name = item['name']
-        action = item['action']
-        property_path = f"{path}.{name}" if path else name
+    def walk(node, path=''):
+        name = node.get('name')
+        current_path = f"{path}.{name}" if path else name
+        action = node.get('action')
 
         if action == 'nested':
-            lines.extend(format_diff_plain(item['children'], property_path))
+            for child in node['children']:
+                walk(child, current_path)
         elif action == 'added':
-            value = format_value_plain(item.get('value'))
-            lines.append(f"Property '{property_path}' was added with value: {value}")
+            lines.append(f"Property '{current_path}' was added with value: {stringify(node['new_value'])}")
         elif action == 'deleted':
-            lines.append(f"Property '{property_path}' was removed")
-        elif action == 'changed':
-            old_val = format_value_plain(item.get('old_value'))
-            new_val = format_value_plain(item.get('new_value'))
-            lines.append(f"Property '{property_path}' was updated. From {old_val} to {new_val}")
+            lines.append(f"Property '{current_path}' was removed")
+        elif action == 'modified':
+            lines.append(
+                f"Property '{current_path}' was updated. From {stringify(node['old_value'])} to {stringify(node['new_value'])}"
+            )
+
+    for node in diff_tree:
+        walk(node)
 
     return '\n'.join(lines)
