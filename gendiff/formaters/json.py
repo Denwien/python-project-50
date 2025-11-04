@@ -9,10 +9,7 @@ def format_diff_json(diff):
             if action == 'nested':
                 result[name] = serialize(item['children'])
             elif action == 'changed':
-                result[name] = {
-                    'old_value': item['old_value'],
-                    'new_value': item['new_value']
-                }
+                result[name] = item['new_value']
             else:
                 result[name] = item.get('value')
         return result

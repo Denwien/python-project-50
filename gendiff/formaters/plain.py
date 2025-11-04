@@ -1,36 +1,33 @@
-def format_value_plain(value):
-    if isinstance(value, dict):
-        return '[complex value]'
-    if value is None:
-        return 'null'
-    if isinstance(value, bool):
-        return str(value).lower()
-    if isinstance(value, str):
-        return f"'{value}'"
-    return str(value)
-
-
-def format_diff_plain(diff, parent=''):
-    result_lines = []
+def format_diff_plain(diff, path=''):
+    lines = []
 
     for item in diff:
         name = item['name']
         action = item['action']
-        path = f"{parent}.{name}" if parent else name
+        property_path = f"{path}.{name}" if path else name
 
-        if action == 'added':
-            result_lines.append(
-                f"Property '{path}' was added with value: {format_value_plain(item['value'])}"
-            )
+        if action == 'nested':
+            lines.extend(format_diff_plain(item['children'], property_path))
+        elif action == 'added':
+            value = stringify(item['value'])
+            lines.append(f"Property '{property_path}' was added with value: {value}")
         elif action == 'deleted':
-            result_lines.append(f"Property '{path}' was removed")
+            lines.append(f"Property '{property_path}' was removed")
         elif action == 'changed':
-            old_val = format_value_plain(item['old_value'])
-            new_val = format_value_plain(item['new_value'])
-            result_lines.append(
-                f"Property '{path}' was updated. From {old_val} to {new_val}"
-            )
-        elif action == 'nested':
-            result_lines.append(format_diff_plain(item['children'], path))
+            old = stringify(item['old_value'])
+            new = stringify(item['new_value'])
+            lines.append(f"Property '{property_path}' was updated. From {old} to {new}")
 
-    return "\n".join(result_lines)
+    return '\n'.join(lines)
+
+
+def stringify(value):
+    if isinstance(value, dict):
+        return '[complex value]'
+    elif value is None:
+        return 'null'
+    elif isinstance(value, bool):
+        return str(value).lower()
+    elif isinstance(value, str):
+        return f"'{value}'"
+    return str(value)
