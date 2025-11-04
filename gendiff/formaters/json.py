@@ -1,21 +1,20 @@
 import json
 
 def format_diff_json(diff):
-    def build_dict(diff_list):
+    def serialize(diff_list):
         result = {}
         for item in diff_list:
             name = item['name']
             action = item['action']
             if action == 'nested':
-                result[name] = build_dict(item['children'])
+                result[name] = serialize(item['children'])
             elif action == 'changed':
                 result[name] = {
                     'old_value': item['old_value'],
-                    'new_value': item['new_value'],
+                    'new_value': item['new_value']
                 }
-            elif action in ('added', 'deleted', 'unchanged'):
+            else:
                 result[name] = item.get('value')
         return result
 
-    structured = build_dict(diff)
-    return json.dumps(structured, indent=4)
+    return json.dumps(serialize(diff), indent=4)

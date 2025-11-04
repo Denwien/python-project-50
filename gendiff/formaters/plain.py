@@ -11,21 +11,26 @@ def format_value_plain(value):
 
 
 def format_diff_plain(diff, parent=''):
-    lines = []
+    result_lines = []
+
     for item in diff:
         name = item['name']
-        full_path = f"{parent}.{name}" if parent else name
         action = item['action']
+        path = f"{parent}.{name}" if parent else name
 
         if action == 'added':
-            value = format_value_plain(item['value'])
-            lines.append(f"Property '{full_path}' was added with value: {value}")
+            result_lines.append(
+                f"Property '{path}' was added with value: {format_value_plain(item['value'])}"
+            )
         elif action == 'deleted':
-            lines.append(f"Property '{full_path}' was removed")
+            result_lines.append(f"Property '{path}' was removed")
         elif action == 'changed':
             old_val = format_value_plain(item['old_value'])
             new_val = format_value_plain(item['new_value'])
-            lines.append(f"Property '{full_path}' was updated. From {old_val} to {new_val}")
+            result_lines.append(
+                f"Property '{path}' was updated. From {old_val} to {new_val}"
+            )
         elif action == 'nested':
-            lines.extend(format_diff_plain(item['children'], full_path))
-    return '\n'.join(lines)
+            result_lines.append(format_diff_plain(item['children'], path))
+
+    return "\n".join(result_lines)
