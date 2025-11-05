@@ -1,4 +1,4 @@
- from gendiff import generate_diff
+from gendiff import generate_diff
 
 def test_json_format():
     file1 = "tests/test_data/file1.json"
@@ -11,4 +11,3 @@ def test_json_format():
     
     assert isinstance(parsed, dict)
     assert 'common' in parsed or 'group1' in parsed
-       
