@@ -24,3 +24,4 @@
 
 ```bash
 git clone git@github.com:Denwien/python-project-50.git
+# Тест Hexlet Action
