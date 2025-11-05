@@ -1,52 +1,80 @@
 SEPARATOR = " "
-ADD = '+ '
-DEL = '- '
-NONE = '  '
 
 
-def format_value(value, spaces_count=2):
+def format_value(value, depth, offset=0):
     if value is None:
         return "null"
     if isinstance(value, bool):
         return str(value).lower()
-    if isinstance(value, dict):
-        indent = SEPARATOR * (spaces_count + 4)
-        result_lines = []
-        for key, inner_value in value.items():
-            formatted_value = format_value(inner_value, spaces_count + 4)
-            result_lines.append(f"{indent}{NONE}{key}: {formatted_value}")
-        formatted_string = '\n'.join(result_lines)
-        end_indent = SEPARATOR * (spaces_count + 2)
-        return f"{{\n{formatted_string}\n{end_indent}}}"
-    return f"{value}"
+    if not isinstance(value, dict):
+        return str(value) if value != "" else ""
 
-
-def make_stylish_diff(diff, spaces_count=2):
-    indent = SEPARATOR * spaces_count
+    indent = SEPARATOR * (depth * 2 + 2 + offset)
     lines = []
+    for key, val in value.items():
+        formatted_val = format_value(val, depth + 1, offset)
+        # Don't add space after colon if formatted value is a dict (starts with \n)
+        if formatted_val and formatted_val[0] == "\n":
+            lines.append(f"{indent}{key}:{formatted_val}")
+        elif formatted_val:
+            lines.append(f"{indent}{key}: {formatted_val}")
+        else:
+            lines.append(f"{indent}{key}:")
+
+    return "\n" + "\n".join(lines)
+
+
+def make_stylish_diff(diff, depth=0):
+    lines = []
+
     for item in diff:
-        key = item['name']
-        action = item['action']
-        value = format_value(item.get('value'), spaces_count)
-        old_value = format_value(item.get('old_value'), spaces_count)
-        new_value = format_value(item.get('new_value'), spaces_count)
+        key = item["name"]
+        action = item["action"]
+
+        # Calculate indentation (depth * 2 spaces)
+        indent = SEPARATOR * (depth * 2)
 
         if action == "unchanged":
-            lines.append(f"{indent}{NONE}{key}: {value}")
-        elif action == "modified":
-            lines.append(f"{indent}{DEL}{key}: {old_value}")
-            lines.append(f"{indent}{ADD}{key}: {new_value}")
-        elif action == "deleted":
-            lines.append(f"{indent}{DEL}{key}: {old_value}")
-        elif action == "added":
-            lines.append(f"{indent}{ADD}{key}: {new_value}")
-        elif action == 'nested':
-            children = make_stylish_diff(item.get("children"), spaces_count + 4)
-            lines.append(f"{indent}{NONE}{key}: {children}")
-    formatted_string = '\n'.join(lines)
-    end_indent = SEPARATOR * (spaces_count - 2)
+            value = item.get("value")
+            formatted = format_value(value, depth)
+            if isinstance(value, dict):
+                lines.append(f"{indent}{key}:{formatted}")
+            elif formatted:
+                lines.append(f"{indent}{key}: {formatted}")
+            else:
+                lines.append(f"{indent}{key}:")
 
-    return f"{{\n{formatted_string}\n{end_indent}}}"
+        elif action == "modified":
+            old_value = item.get("old_value")
+            new_value = item.get("new_value")
+            old_formatted = format_value(old_value, depth, offset=2)
+            new_formatted = format_value(new_value, depth, offset=2)
+            lines.append(
+                f"{indent}- {key}:{'' if isinstance(old_value, dict) else ' '}{old_formatted}".rstrip()
+            )
+            lines.append(
+                f"{indent}+ {key}:{'' if isinstance(new_value, dict) else ' '}{new_formatted}".rstrip()
+            )
+
+        elif action == "deleted":
+            old_value = item.get("old_value")
+            formatted = format_value(old_value, depth)
+            lines.append(
+                f"{indent}- {key}:{'' if isinstance(old_value, dict) else ' '}{formatted}".rstrip()
+            )
+
+        elif action == "added":
+            value = item.get("value")
+            formatted = format_value(value, depth)
+            lines.append(
+                f"{indent}+ {key}:{'' if isinstance(value, dict) else ' '}{formatted}".rstrip()
+            )
+
+        elif action == "nested":
+            children_diff = make_stylish_diff(item.get("children"), depth + 1)
+            lines.append(f"{indent}{key}:\n{children_diff}")
+
+    return "\n".join(lines)
 
 
 def format_diff_stylish(data):

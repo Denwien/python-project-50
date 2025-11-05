@@ -24,7 +24,7 @@ def format_plain(diff_tree):
             for child in node['children']:
                 walk(child, current_path)
         elif action == 'added':
-            lines.append(f"Property '{current_path}' was added with value: {stringify(node['new_value'])}")
+            lines.append(f"Property '{current_path}' was added with value: {stringify(node['value'])}")
         elif action == 'deleted':
             lines.append(f"Property '{current_path}' was removed")
         elif action == 'modified':
