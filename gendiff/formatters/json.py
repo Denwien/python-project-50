@@ -1,6 +1,6 @@
 import json
 
-def format_diff_json(diff_tree):
+def format_json(diff_tree):
     def transform(node):
         action = node.get('action')
         if action == 'nested':
