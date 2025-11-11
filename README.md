@@ -7,11 +7,6 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Denwien_python-project-50&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Denwien_python-project-50)
 [![asciicast](https://asciinema.org/a/c0nTO1fHAi7UXAdUuDZhisrdo.svg)](https://asciinema.org/a/c0nTO1fHAi7UXAdUuDZhisrdo)
 
-Или воспроизвести локально:
-
-```bash
-asciinema play demo.cast
-
 # Difference Calculator (gendiff)
 
 - **gendiff** — это консольный инструмент для поиска различий между файлами.  
