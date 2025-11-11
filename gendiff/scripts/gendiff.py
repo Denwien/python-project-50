@@ -1,6 +1,6 @@
 import argparse
 import json
-from gendiff.scripts.parser import load_file
+from gendiff.scripts.parser import parse_data_from_file as load_file
 from gendiff.scripts.builder import build_diff
 from gendiff.formatters.stylish import format_diff_stylish
 
