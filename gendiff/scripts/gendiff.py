@@ -1,7 +1,7 @@
 import argparse
 import json
-from gendiff.parser import load_file
-from gendiff.builder import build_diff
+from gendiff.scripts.parser import load_file
+from gendiff.scripts.builder import build_diff
 from gendiff.formatters.stylish import format_diff_stylish
 
 
