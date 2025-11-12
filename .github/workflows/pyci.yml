@@ -35,22 +35,25 @@ jobs:
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
 
-    - name: Run linter (Ruff)
-      run: uv run ruff check gendiff tests || true  # Не ломает CI при ошибках линтера
+    - name: Run linter
+      run: uv run ruff check gendiff tests
 
     - name: Run tests with coverage
       run: uv run pytest --cov=gendiff --cov-report=xml:coverage.xml tests/
 
-    - name: Upload coverage to SonarCloud
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
+      with:
+        organization: denwien
+        projectKey: Denwien_python-project-50
+        projectBaseDir: .
+        extraProperties: |
+          sonar.python.coverage.reportPaths=coverage.xml
+          sonar.coverage.exclusions=tests/**
+          sonar.exclusions=tests/**
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: |
-        uv run sonar-scanner \
-          -Dsonar.projectKey=Denwien_python-project-50 \
-          -Dsonar.organization=denwien \
-          -Dsonar.python.coverage.reportPaths=${{ github.workspace }}/coverage.xml \
-          -Dsonar.coverage.exclusions=tests/** \
-          -Dsonar.exclusions=tests/**
+
 
 
 
