@@ -25,9 +25,10 @@ def main():
     parser.add_argument("first_file", help="Path to the first file")
     parser.add_argument("second_file", help="Path to the second file")
     parser.add_argument(
-        "-f", "--format",
+        "-f",
+        "--format",
         default="stylish",
-        help="Set format of output (default: stylish)"
+        help="Set format of output (default: stylish)",
     )
 
     args = parser.parse_args()

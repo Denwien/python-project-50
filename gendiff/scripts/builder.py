@@ -16,5 +16,9 @@ def build_diff(data1, data2):
             elif val1 == val2:
                 diff[key] = {"action": "unchanged", "value": val1}
             else:
-                diff[key] = {"action": "modified", "old_value": val1, "new_value": val2}
+                diff[key] = {
+                    "action": "modified",
+                    "old_value": val1,
+                    "new_value": val2,
+                }
     return diff
