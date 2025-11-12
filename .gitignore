@@ -215,3 +215,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 build/
+demo.cast
+demo_script.sh
+demo.cast
+demo_script.sh

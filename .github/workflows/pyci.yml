@@ -35,8 +35,24 @@ jobs:
     - name: Set PYTHONPATH
       run: echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
 
+    - name: Run linter
+      run: uv run ruff check gendiff tests
+
     - name: Run tests with coverage
-      run: uv run pytest --cov=gendiff tests/
+      run: uv run pytest --cov=gendiff --cov-report=xml:coverage.xml tests/
+
+    - name: Upload coverage to SonarCloud
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        uv run sonar-scanner \
+          -Dsonar.projectKey=Denwien_python-project-50 \
+          -Dsonar.organization=denwien \
+          -Dsonar.python.coverage.reportPaths=coverage.xml \
+          -Dsonar.coverage.exclusions=tests/** \
+          -Dsonar.exclusions=tests/**
+
+
 
 
 
