@@ -24,15 +24,20 @@ def format_plain(diff_tree):
             for child in node['children']:
                 walk(child, current_path)
         elif action == 'added':
-            lines.append(f"Property '{current_path}' was added with value: {stringify(node['value'])}")
+            lines.append(
+                f"Property '{current_path}' was added with value: "
+                f"{stringify(node['value'])}"
+            )
         elif action == 'deleted':
             lines.append(f"Property '{current_path}' was removed")
         elif action == 'modified':
             lines.append(
-                f"Property '{current_path}' was updated. From {stringify(node['old_value'])} to {stringify(node['new_value'])}"
+                f"Property '{current_path}' was updated. "
+                f"From {stringify(node['old_value'])} to {stringify(node['new_value'])}"
             )
 
     for node in diff_tree:
         walk(node)
 
     return '\n'.join(lines)
+

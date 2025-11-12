@@ -5,13 +5,17 @@ def format_json(diff_tree):
     def transform(node):
         action = node.get('action')
         if action == 'nested':
-            return {node['name']: {k: v for d in [transform(child) for child in node['children']] for k, v in d.items()}}
+            children_transformed = [transform(child) for child in node['children']]
+            merged = {k: v for d in children_transformed for k, v in d.items()}
+            return {node['name']: merged}
         if action == 'added':
             return {node['name']: node.get('new_value', node.get('value'))}
         if action == 'deleted':
             return {node['name']: node.get('old_value')}
         if action == 'modified':
-            return {node['name']: {'old_value': node['old_value'], 'new_value': node['new_value']}}
+            old_val = node['old_value']
+            new_val = node['new_value']
+            return {node['name']: {'old_value': old_val, 'new_value': new_val}}
         if action == 'unchanged':
             return {node['name']: node['value']}
         return {}
@@ -19,4 +23,5 @@ def format_json(diff_tree):
     result = {}
     for node in diff_tree:
         result.update(transform(node))
+
     return json.dumps(result, indent=2)
