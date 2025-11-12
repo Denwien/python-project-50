@@ -46,17 +46,18 @@ def make_stylish_diff(diff, depth=0):
             new_value = item.get("new_value")
             old_formatted = format_value(old_value, depth, offset=2)
             new_formatted = format_value(new_value, depth, offset=2)
-
             lines.append(
                 (
                     f"{indent}- {key}:"
-                    f"{'' if isinstance(old_value, dict) else ' '}{old_formatted}"
+                    f"{'' if isinstance(old_value, dict) else ' '}"
+                    f"{old_formatted}"
                 ).rstrip()
             )
             lines.append(
                 (
                     f"{indent}+ {key}:"
-                    f"{'' if isinstance(new_value, dict) else ' '}{new_formatted}"
+                    f"{'' if isinstance(new_value, dict) else ' '}"
+                    f"{new_formatted}"
                 ).rstrip()
             )
 
@@ -66,7 +67,8 @@ def make_stylish_diff(diff, depth=0):
             lines.append(
                 (
                     f"{indent}- {key}:"
-                    f"{'' if isinstance(old_value, dict) else ' '}{formatted}"
+                    f"{'' if isinstance(old_value, dict) else ' '}"
+                    f"{formatted}"
                 ).rstrip()
             )
 
@@ -76,7 +78,8 @@ def make_stylish_diff(diff, depth=0):
             lines.append(
                 (
                     f"{indent}+ {key}:"
-                    f"{'' if isinstance(value, dict) else ' '}{formatted}"
+                    f"{'' if isinstance(value, dict) else ' '}"
+                    f"{formatted}"
                 ).rstrip()
             )
 
@@ -89,3 +92,4 @@ def make_stylish_diff(diff, depth=0):
 
 def format_diff_stylish(data):
     return make_stylish_diff(data)
+
