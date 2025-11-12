@@ -3,13 +3,13 @@ def format_plain(diff_tree):
     Форматирует дерево изменений в plain.
     """
     def stringify(value):
-        if isinstance(value, dict) or isinstance(value, list):
+        if isinstance(value, (dict, list)):
             return '[complex value]'
-        elif isinstance(value, str):
+        if isinstance(value, str):
             return f"'{value}'"
-        elif value is None:
+        if value is None:
             return 'null'
-        elif isinstance(value, bool):
+        if isinstance(value, bool):
             return str(value).lower()
         return str(value)
 
@@ -23,21 +23,27 @@ def format_plain(diff_tree):
         if action == 'nested':
             for child in node['children']:
                 walk(child, current_path)
+
         elif action == 'added':
+            value_str = stringify(node['value'])
             lines.append(
-                f"Property '{current_path}' was added with value: "
-                f"{stringify(node['value'])}"
+                f"Property '{current_path}' was added with value: {value_str}"
             )
+
         elif action == 'deleted':
             lines.append(f"Property '{current_path}' was removed")
+
         elif action == 'modified':
+            old_str = stringify(node['old_value'])
+            new_str = stringify(node['new_value'])
             lines.append(
                 f"Property '{current_path}' was updated. "
-                f"From {stringify(node['old_value'])} to {stringify(node['new_value'])}"
+                f"From {old_str} to {new_str}"
             )
 
     for node in diff_tree:
         walk(node)
 
     return '\n'.join(lines)
+
 
