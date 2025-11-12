@@ -1,5 +1,6 @@
 import json
 
+
 def format_json(diff_tree):
     def transform(node):
         action = node.get('action')

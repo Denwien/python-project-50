@@ -1,4 +1,5 @@
-from gendiff.formatters import stylish, plain, json
+from gendiff.formatters import json, plain, stylish
+
 
 def format_identifier(diff, formatter='stylish'):
     if formatter == 'stylish':

@@ -1,5 +1,6 @@
 from gendiff import generate_diff
 
+
 def test_json_format():
     file1 = "tests/test_data/file1.json"
     file2 = "tests/test_data/file2.json"

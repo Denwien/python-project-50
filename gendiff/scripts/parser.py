@@ -1,6 +1,7 @@
 import json
-import yaml
 import os
+
+import yaml
 
 
 def parse_data_from_file(file_path):

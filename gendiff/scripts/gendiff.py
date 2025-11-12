@@ -1,8 +1,9 @@
 import argparse
 import json
-from gendiff.scripts.parser import parse_data_from_file as load_file
-from gendiff.scripts.builder import build_diff
+
 from gendiff.formatters.stylish import format_diff_stylish
+from gendiff.scripts.builder import build_diff
+from gendiff.scripts.parser import parse_data_from_file as load_file
 
 
 def generate_diff(file_path1, file_path2, format_name="stylish"):
