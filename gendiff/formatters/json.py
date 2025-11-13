@@ -1,36 +1,26 @@
 import json
 
-
 def format_json(diff_tree):
+    """
+    Форматирует дерево изменений в JSON.
+    """
     def transform(node):
-        action = node.get("action")
+        action = node.get('action')
+        if action == 'nested':
+            return {node['name']: [transform(child) for child in node['children']]}
+        elif action == 'added':
+            return {node['name']: node['value']}
+        elif action == 'deleted':
+            return {node['name']: node['old_value']}
+        elif action == 'modified':
+            return {node['name']: {'old_value': node['old_value'], 'new_value': node['new_value']}}
+        elif action == 'unchanged':
+            return {node['name']: node['value']}
+        return node
 
-        if action == "nested":
-            children_transformed = [
-                transform(child) for child in node["children"]
-            ]
-            merged = {k: v for d in children_transformed for k, v in d.items()}
-            return {node["name"]: merged}
-
-        if action == "added":
-            val = node.get("new_value", node.get("value"))
-            return {node["name"]: val}
-
-        if action == "deleted":
-            return {node["name"]: node.get("old_value")}
-
-        if action == "modified":
-            old_val = node["old_value"]
-            new_val = node["new_value"]
-            return {node["name"]: {"old_value": old_val, "new_value": new_val}}
-
-        if action == "unchanged":
-            return {node["name"]: node["value"]}
-
-        return {}
-
+    # Merge all transformed nodes into a single dict
     result = {}
     for node in diff_tree:
         result.update(transform(node))
-
+    
     return json.dumps(result, indent=2)
