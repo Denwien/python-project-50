@@ -19,11 +19,13 @@ def format_value(value, depth, offset=0):
             lines.append(f"{indent}{key}: {formatted_val}")
         else:
             lines.append(f"{indent}{key}:")
+
     return "\n" + "\n".join(lines)
 
 
 def make_stylish_diff(diff, depth=0):
     lines = []
+
     for item in diff:
         key = item["name"]
         action = item["action"]
@@ -44,26 +46,34 @@ def make_stylish_diff(diff, depth=0):
             new_value = item.get("new_value")
             old_formatted = format_value(old_value, depth, offset=2)
             new_formatted = format_value(new_value, depth, offset=2)
-            old_prefix = "" if isinstance(old_value, dict) else " "
-            new_prefix = "" if isinstance(new_value, dict) else " "
-            lines.append(
-                f"{indent}- {key}:{old_prefix}{old_formatted}".rstrip()
+
+            old_line = (
+                f"{indent}- {key}:{'' if isinstance(old_value, dict) else ' '}"
+                f"{old_formatted}"
             )
-            lines.append(
-                f"{indent}+ {key}:{new_prefix}{new_formatted}".rstrip()
+            new_line = (
+                f"{indent}+ {key}:{'' if isinstance(new_value, dict) else ' '}"
+                f"{new_formatted}"
             )
+
+            lines.append(old_line.rstrip())
+            lines.append(new_line.rstrip())
 
         elif action == "deleted":
             old_value = item.get("old_value")
             formatted = format_value(old_value, depth)
-            prefix = "" if isinstance(old_value, dict) else " "
-            lines.append(f"{indent}- {key}:{prefix}{formatted}".rstrip())
+            lines.append(
+                f"{indent}- {key}:{'' if isinstance(old_value, dict) else ' '}"
+                f"{formatted}".rstrip()
+            )
 
         elif action == "added":
             value = item.get("value")
             formatted = format_value(value, depth)
-            prefix = "" if isinstance(value, dict) else " "
-            lines.append(f"{indent}+ {key}:{prefix}{formatted}".rstrip())
+            lines.append(
+                f"{indent}+ {key}:{'' if isinstance(value, dict) else ' '}"
+                f"{formatted}".rstrip()
+            )
 
         elif action == "nested":
             children_diff = make_stylish_diff(item.get("children"), depth + 1)

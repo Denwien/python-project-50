@@ -16,17 +16,27 @@ def find_diff(first_data, second_data):
         elif key not in second_data:
             # ключ есть только в первом словаре → удалено
             diff.append(
-                {"name": key, "action": "deleted", "old_value": first_data[key]}
+                {
+                    "name": key,
+                    "action": "deleted",
+                    "old_value": first_data[key],
+                }
             )
         else:
             first_value = first_data[key]
             second_value = second_data[key]
 
-            if isinstance(first_value, dict) and isinstance(second_value, dict):
+            if isinstance(first_value, dict) and isinstance(
+                second_value, dict
+            ):
                 # рекурсивно для вложенных словарей
                 children_diff = find_diff(first_value, second_value)
                 diff.append(
-                    {"name": key, "action": "nested", "children": children_diff}
+                    {
+                        "name": key,
+                        "action": "nested",
+                        "children": children_diff,
+                    }
                 )
             elif first_value == second_value:
                 # без изменений
