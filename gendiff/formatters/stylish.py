@@ -1,6 +1,5 @@
 SEPARATOR = " "
 
-
 def format_value(value, depth):
     if value is None:
         return "null"
@@ -12,8 +11,7 @@ def format_value(value, depth):
     lines = []
     for k, v in value.items():
         lines.append(f"{indent}{k}: {format_value(v, depth + 1)}")
-    return "\n" + "\n".join(lines)
-
+    return "{\n" + "\n".join(lines) + f"\n{indent}}}"
 
 def make_stylish_diff(diff, depth=0):
     lines = []
@@ -42,6 +40,6 @@ def make_stylish_diff(diff, depth=0):
 
     return "\n".join(lines)
 
-
 def format_diff_stylish(diff):
     return "{\n" + make_stylish_diff(diff) + "\n}"
+
