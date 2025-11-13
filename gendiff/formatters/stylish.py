@@ -19,13 +19,11 @@ def format_value(value, depth, offset=0):
             lines.append(f"{indent}{key}: {formatted_val}")
         else:
             lines.append(f"{indent}{key}:")
-
     return "\n" + "\n".join(lines)
 
 
 def make_stylish_diff(diff, depth=0):
     lines = []
-
     for item in diff:
         key = item["name"]
         action = item["action"]
@@ -34,39 +32,40 @@ def make_stylish_diff(diff, depth=0):
         if action == "unchanged":
             value = item.get("value")
             formatted = format_value(value, depth)
-            if formatted.startswith("\n"):
-                line = f"{indent}{key}:{formatted}"
+            if isinstance(value, dict):
+                lines.append(f"{indent}{key}:{formatted}")
+            elif formatted:
+                lines.append(f"{indent}{key}: {formatted}")
             else:
-                line = f"{indent}{key}: {formatted}"
-            lines.append(line)
-            continue
+                lines.append(f"{indent}{key}:")
 
-        if action == "modified":
+        elif action == "modified":
             old_value = item.get("old_value")
             new_value = item.get("new_value")
             old_formatted = format_value(old_value, depth, offset=2)
             new_formatted = format_value(new_value, depth, offset=2)
-            sep_old = "" if isinstance(old_value, dict) else " "
-            sep_new = "" if isinstance(new_value, dict) else " "
-            lines.append(f"{indent}- {key}:{sep_old}{old_formatted}".rstrip())
-            lines.append(f"{indent}+ {key}:{sep_new}{new_formatted}".rstrip())
-            continue
+            old_prefix = "" if isinstance(old_value, dict) else " "
+            new_prefix = "" if isinstance(new_value, dict) else " "
+            lines.append(
+                f"{indent}- {key}:{old_prefix}{old_formatted}".rstrip()
+            )
+            lines.append(
+                f"{indent}+ {key}:{new_prefix}{new_formatted}".rstrip()
+            )
 
-        if action == "deleted":
+        elif action == "deleted":
             old_value = item.get("old_value")
             formatted = format_value(old_value, depth)
-            sep = "" if isinstance(old_value, dict) else " "
-            lines.append(f"{indent}- {key}:{sep}{formatted}".rstrip())
-            continue
+            prefix = "" if isinstance(old_value, dict) else " "
+            lines.append(f"{indent}- {key}:{prefix}{formatted}".rstrip())
 
-        if action == "added":
+        elif action == "added":
             value = item.get("value")
             formatted = format_value(value, depth)
-            sep = "" if isinstance(value, dict) else " "
-            lines.append(f"{indent}+ {key}:{sep}{formatted}".rstrip())
-            continue
+            prefix = "" if isinstance(value, dict) else " "
+            lines.append(f"{indent}+ {key}:{prefix}{formatted}".rstrip())
 
-        if action == "nested":
+        elif action == "nested":
             children_diff = make_stylish_diff(item.get("children"), depth + 1)
             lines.append(f"{indent}{key}:\n{children_diff}")
 
