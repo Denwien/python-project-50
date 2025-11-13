@@ -92,4 +92,3 @@ def make_stylish_diff(diff, depth=0):
 
 def format_diff_stylish(data):
     return make_stylish_diff(data)
-

@@ -1,5 +1,4 @@
 import json
-import os
 from typing import Any
 
 import yaml
@@ -19,6 +18,4 @@ def parse_data_from_file(file_path: str) -> Any:
             f"Failed to parse {file_path}: {parse_err}"
         ) from parse_err
     except IOError as io_err:
-        raise IOError(
-            f"Failed to read {file_path}: {io_err}"
-        ) from io_err
+        raise IOError(f"Failed to read {file_path}: {io_err}") from io_err
