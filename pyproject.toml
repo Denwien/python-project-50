@@ -1,18 +1,13 @@
 [project]
-name = "hexlet-code" 
+name = "hexlet-code"
 version = "0.1.0"
 description = "Compares two configuration files and shows a difference."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
-    "pytest>=8.4.1",
+    "pyyaml>=6.0.2",
     "pytest-cov>=7.0.0",
-    "pyyaml>=6.0.3",
-    "ruff>=0.12.9",
 ]
-
-[project.scripts]
-gendiff = "gendiff.scripts.gendiff:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -20,6 +15,16 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["gendiff"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "ruff>=0.12.9",
+]
+
+[project.scripts]
+gendiff = "gendiff.scripts.gendiff:main"
+
 
 
 
