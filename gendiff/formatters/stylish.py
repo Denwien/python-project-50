@@ -1,45 +1,67 @@
-SEPARATOR = " "
+INDENT_SIZE = 4
 
-def format_value(value, depth):
+
+def stringify(value, depth):
+    if isinstance(value, dict):
+        lines = ["{"]
+        for key, inner_value in sorted(value.items()):
+            indent = " " * ((depth + 1) * INDENT_SIZE)
+            lines.append(
+                f"{indent}{key}: {stringify(inner_value, depth + 1)}"
+            )
+        closing_indent = " " * (depth * INDENT_SIZE)
+        lines.append(f"{closing_indent}}}")
+        return "\n".join(lines)
+
     if value is None:
         return "null"
+
     if isinstance(value, bool):
         return str(value).lower()
-    if not isinstance(value, dict):
-        return str(value)
-    indent = SEPARATOR * (depth * 4)
-    lines = []
-    for k, v in value.items():
-        lines.append(f"{indent}{k}: {format_value(v, depth + 1)}")
-    return "{\n" + "\n".join(lines) + f"\n{indent}}}"
 
-def make_stylish_diff(diff, depth=0):
-    lines = []
-    indent = SEPARATOR * (depth * 4 - 2) if depth > 0 else ""
-    for item in diff:
-        key = item["name"]
-        action = item["action"]
+    return str(value)
+
+
+def make_stylish(diff, depth=0):
+    lines = ["{"]
+    normal_indent = " " * ((depth + 1) * INDENT_SIZE)
+    sign_indent = " " * ((depth + 1) * INDENT_SIZE - 2)
+
+    for node in diff:
+        key = node["name"]
+        action = node["action"]
 
         if action == "nested":
-            children = make_stylish_diff(item["children"], depth + 1)
-            lines.append(f"{indent}  {key}: {children}")
-        elif action == "unchanged":
-            value = format_value(item["value"], depth + 1)
-            lines.append(f"{indent}  {key}: {value}")
-        elif action == "added":
-            value = format_value(item["value"], depth + 1)
-            lines.append(f"{indent}+ {key}: {value}")
-        elif action == "deleted":
-            value = format_value(item["old_value"], depth + 1)
-            lines.append(f"{indent}- {key}: {value}")
-        elif action == "modified":
-            old_value = format_value(item["old_value"], depth + 1)
-            new_value = format_value(item["new_value"], depth + 1)
-            lines.append(f"{indent}- {key}: {old_value}")
-            lines.append(f"{indent}+ {key}: {new_value}")
+            children = make_stylish(node["children"], depth + 1)
+            lines.append(f"{normal_indent}{key}: {children}")
+            continue
 
+        if action == "unchanged":
+            value = stringify(node["value"], depth + 1)
+            lines.append(f"{normal_indent}{key}: {value}")
+            continue
+
+        if action == "added":
+            value = stringify(node["value"], depth + 1)
+            lines.append(f"{sign_indent}+ {key}: {value}")
+            continue
+
+        if action == "deleted":
+            value = stringify(node["old_value"], depth + 1)
+            lines.append(f"{sign_indent}- {key}: {value}")
+            continue
+
+        if action == "modified":
+            old_value = stringify(node["old_value"], depth + 1)
+            new_value = stringify(node["new_value"], depth + 1)
+            lines.append(f"{sign_indent}- {key}: {old_value}")
+            lines.append(f"{sign_indent}+ {key}: {new_value}")
+            continue
+
+    closing_indent = " " * (depth * INDENT_SIZE)
+    lines.append(f"{closing_indent}}}")
     return "\n".join(lines)
 
-def format_diff_stylish(diff):
-    return "{\n" + make_stylish_diff(diff) + "\n}"
 
+def format_diff_stylish(diff):
+    return make_stylish(diff)
