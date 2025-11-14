@@ -20,9 +20,7 @@ def walk_plain(node, path, lines):
             walk_plain(child, current_path, lines)
     elif action == "added":
         value = stringify(node["value"])
-        lines.append(
-            f"Property '{current_path}' was added with value: {value}"
-        )
+        lines.append(f"Property '{current_path}' was added with value: {value}")
     elif action == "deleted":
         lines.append(f"Property '{current_path}' was removed")
     elif action == "modified":

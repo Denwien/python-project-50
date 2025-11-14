@@ -26,9 +26,7 @@ def find_diff(first_data, second_data):
             first_value = first_data[key]
             second_value = second_data[key]
 
-            if isinstance(first_value, dict) and isinstance(
-                second_value, dict
-            ):
+            if isinstance(first_value, dict) and isinstance(second_value, dict):
                 # рекурсивно для вложенных словарей
                 children_diff = find_diff(first_value, second_value)
                 diff.append(
