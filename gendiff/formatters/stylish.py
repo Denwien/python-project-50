@@ -1,5 +1,6 @@
 SEPARATOR = " "
 
+
 def format_value(value, depth, offset=0):
     if value is None:
         return "null"
@@ -20,6 +21,7 @@ def format_value(value, depth, offset=0):
             lines.append(f"{indent}{key}:")
 
     return "\n" + "\n".join(lines)
+
 
 def make_stylish_diff(diff, depth=0):
     lines = []
@@ -87,6 +89,7 @@ def make_stylish_diff(diff, depth=0):
             lines.append(f"{indent}{key}:\n{children_diff}")
 
     return "\n".join(lines)
+
 
 def format_diff_stylish(data):
     return make_stylish_diff(data)
