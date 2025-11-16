@@ -1,73 +1,49 @@
-INDENT_STEP = 4
-
-
-def make_indent(depth, shift=0):
-    return " " * (depth * INDENT_STEP - shift)
+SEPARATOR = " "
 
 
 def format_value(value, depth):
-    """Форматирует значение (в т.ч. вложенные словари)."""
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return str(value).lower()
     if not isinstance(value, dict):
-        if value is True:
-            return "true"
-        if value is False:
-            return "false"
-        if value is None:
-            return "null"
         return str(value)
 
-    lines = ["{"]
-    for key, val in value.items():
-        lines.append(
-            f"{make_indent(depth + 1)}{key}: {format_value(val, depth + 1)}"
-        )
-    lines.append(f"{make_indent(depth)}}}")
-    return "\n".join(lines)
+    indent = SEPARATOR * (depth * 4)
+    lines = []
+    for k, v in value.items():
+        lines.append(f"{indent}    {k}: {format_value(v, depth + 1)}")
+    return "{\n" + "\n".join(lines) + f"\n{indent}}}"
 
 
-def make_stylish(diff, depth=1):
-    """Рекурсивная генерация stylish-формата."""
-    lines = ["{"]
+def make_stylish(diff, depth=0):
+    lines = []
+    indent = SEPARATOR * (depth * 4)
 
-    for key in sorted(diff.keys()):
-        node = diff[key]
+    for node in diff:
+        name = node["name"]
         action = node["action"]
 
-        if action == "unchanged":
-            lines.append(
-                f"{make_indent(depth)}  {key}: "
-                f"{format_value(node['value'], depth)}"
-            )
-
-        elif action == "added":
-            lines.append(
-                f"{make_indent(depth)}+ {key}: "
-                f"{format_value(node['value'], depth)}"
-            )
-
-        elif action == "deleted":
-            lines.append(
-                f"{make_indent(depth)}- {key}: "
-                f"{format_value(node['old_value'], depth)}"
-            )
-
-        elif action == "modified":
-            lines.append(
-                f"{make_indent(depth)}- {key}: "
-                f"{format_value(node['old_value'], depth)}"
-            )
-            lines.append(
-                f"{make_indent(depth)}+ {key}: "
-                f"{format_value(node['new_value'], depth)}"
-            )
-
-        elif action == "nested":
+        if action == "nested":
             children = make_stylish(node["children"], depth + 1)
-            lines.append(f"{make_indent(depth)}  {key}: {children}")
+            lines.append(f"{indent}    {name}: {{\n{children}\n{indent}    }}")
+        elif action == "unchanged":
+            value = format_value(node["value"], depth + 1)
+            lines.append(f"{indent}    {name}: {value}")
+        elif action == "added":
+            value = format_value(node["value"], depth + 1)
+            lines.append(f"{indent}  + {name}: {value}")
+        elif action == "deleted":
+            value = format_value(node["value"], depth + 1)
+            lines.append(f"{indent}  - {name}: {value}")
+        elif action == "modified":
+            old_value = format_value(node["old_value"], depth + 1)
+            new_value = format_value(node["new_value"], depth + 1)
+            lines.append(f"{indent}  - {name}: {old_value}")
+            lines.append(f"{indent}  + {name}: {new_value}")
 
-    lines.append(f"{make_indent(depth - 1)}}}")
     return "\n".join(lines)
 
 
 def format_diff_stylish(diff):
-    return make_stylish(diff)
+    return "{\n" + make_stylish(diff) + "\n}"
