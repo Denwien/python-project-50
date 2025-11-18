@@ -24,7 +24,7 @@ def format_value(value, depth):
 def format_diff_stylish(diff, depth=0):
     lines = []
     indent = INDENT * depth
-    sign_indent = INDENT * depth  # для + / - на текущем уровне
+    sign_indent = INDENT * depth
 
     for node in diff:
         name = node["name"]
@@ -48,7 +48,7 @@ def format_diff_stylish(diff, depth=0):
             lines.append(f"{sign_indent}{PREFIX_REMOVED}{name}: {old_value}")
             lines.append(f"{sign_indent}{PREFIX_ADDED}{name}: {new_value}")
 
-    return "\n".join(lines)  # убрали внешние {}
+    return "\n".join(lines)
 
 
 def format_stylish(diff):
