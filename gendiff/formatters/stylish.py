@@ -31,9 +31,8 @@ def format_diff_stylish(diff, depth=0):
         elif action in ('added',):
             lines.append(f"{indent}{' ' * (INDENT - SIGN_INDENT)}+ {name}: {format_value(item['value'], depth + 1)}")
         elif action in ('removed', 'deleted'):
-            # Исправлено: для удалённых элементов используем 'old_value'
             lines.append(f"{indent}{' ' * (INDENT - SIGN_INDENT)}- {name}: {format_value(item.get('old_value'), depth + 1)}")
-        elif action == 'changed':
+        elif action in ('changed', 'modified'):
             lines.append(f"{indent}{' ' * (INDENT - SIGN_INDENT)}- {name}: {format_value(item['old_value'], depth + 1)}")
             lines.append(f"{indent}{' ' * (INDENT - SIGN_INDENT)}+ {name}: {format_value(item['new_value'], depth + 1)}")
         elif action == 'unchanged':
