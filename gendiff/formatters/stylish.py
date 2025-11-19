@@ -39,4 +39,7 @@ def format_diff_stylish(diff, depth=0):
             lines.append(f"{indent}    {name}: {format_value(item['value'], depth + 1)}")
         else:
             raise ValueError(f"Unknown action: {action}")
-    return "\n".join(lines)
+    result = "\n".join(lines)
+    if depth == 0:  # добавляем внешние фигурные скобки для всего diff
+        return "{\n" + result + "\n}"
+    return result
