@@ -7,7 +7,6 @@ from gendiff.scripts.parser import parse_data_from_file as load_file
 
 
 def generate_diff(file_path1, file_path2, format_name="stylish"):
-    """Generate diff between two files in specified format."""
     data1 = load_file(file_path1)
     data2 = load_file(file_path2)
     diff = build_diff(data1, data2)
@@ -16,7 +15,7 @@ def generate_diff(file_path1, file_path2, format_name="stylish"):
         return format_diff_stylish(diff)
     if format_name == "json":
         return json.dumps(diff, indent=4)
-    raise ValueError(f"Unknown format: {format_name}")
+    return diff
 
 
 def main():
@@ -33,11 +32,8 @@ def main():
     )
 
     args = parser.parse_args()
-    output = generate_diff(args.first_file, args.second_file, args.format)
-    print(output)
-    return 0
+    print(generate_diff(args.first_file, args.second_file, args.format))
 
 
 if __name__ == "__main__":
-    import sys
-    sys.exit(main())
+    main()
