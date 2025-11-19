@@ -19,9 +19,7 @@ def to_str(value, depth):
     else:
         return str(value)
 
-
-def format_stylish(diff, depth=0):
-    """Рекурсивно форматирует diff для stylish."""
+def format_diff_stylish(diff, depth=0):
     lines = []
     indent = ' ' * (depth * INDENT)
     for item in diff:
