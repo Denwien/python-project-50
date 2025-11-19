@@ -1,17 +1,19 @@
 INDENT = 4
 SIGN_INDENT = 2
 
+
 def format_value(value, depth):
-    """Форматирование значения для stylish"""
+    """Форматирование значения с учётом вложенности"""
     if isinstance(value, dict):
         lines = []
-        indent = ' ' * (depth * INDENT)
+        indent = ' ' * ((depth + 1) * INDENT)
         for k, v in value.items():
-            lines.append(f"{indent}    {k}: {format_value(v, depth + 1)}")
-        return "{\n" + "\n".join(lines) + f"\n{indent}}}"
-    elif value is None:
-        return "null"
-    elif isinstance(value, bool):
+            lines.append(f"{indent}{k}: {format_value(v, depth + 1)}")
+        result = "{\n" + "\n".join(lines) + f"\n{' ' * (depth * INDENT)}}}"
+        return result
+    if value is None:
+        return ""
+    if isinstance(value, bool):
         return str(value).lower()
     return str(value)
 
@@ -29,13 +31,12 @@ def format_diff_stylish(diff, depth=0):
             lines.append(f"{indent}    {name}: {{")
             lines.append(format_diff_stylish(item['children'], depth + 1))
             lines.append(f"{indent}    }}")
-        elif action == 'added':
+        elif action in ('added',):
             lines.append(
                 f"{indent}{' ' * (INDENT - SIGN_INDENT)}+ {name}: "
                 f"{format_value(item['value'], depth + 1)}"
             )
         elif action in ('removed', 'deleted'):
-            # Используем get('old_value') чтобы избежать KeyError
             lines.append(
                 f"{indent}{' ' * (INDENT - SIGN_INDENT)}- {name}: "
                 f"{format_value(item.get('old_value'), depth + 1)}"
@@ -56,4 +57,7 @@ def format_diff_stylish(diff, depth=0):
         else:
             raise ValueError(f"Unknown action: {action}")
 
-    return "\n".join(lines)
+    result = "\n".join(lines)
+    if depth == 0:
+        return "{\n" + result + "\n}"
+    return result
