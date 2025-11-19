@@ -3,20 +3,21 @@ SIGN_INDENT = 2
 
 
 def format_value(value, depth):
-    """Форматирует значение для вывода в stylish."""
+    """Форматирование значения с учётом вложенности."""
+    indent = ' ' * (depth * INDENT)
     if isinstance(value, dict):
         lines = []
-        indent = ' ' * (depth * INDENT)
         for k, v in value.items():
             lines.append(f"{indent}    {k}: {format_value(v, depth + 1)}")
         return "{\n" + "\n".join(lines) + f"\n{indent}}}"
-    if value is True:
+    elif value is True:
         return "true"
-    if value is False:
+    elif value is False:
         return "false"
-    if value is None:
+    elif value is None:
         return "null"
-    return str(value)
+    else:
+        return str(value)
 
 
 def format_diff_stylish(diff, depth=0):
@@ -58,4 +59,7 @@ def format_diff_stylish(diff, depth=0):
         else:
             raise ValueError(f"Unknown action: {action}")
 
-    return "\n".join(lines)
+    result = "\n".join(lines)
+    if depth == 0:
+        return "{\n" + result + "\n}"
+    return result
