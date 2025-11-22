@@ -81,7 +81,10 @@ def _is_list_ast(diff) -> bool:
     Проверяет, является ли diff списком нод формата:
     {"name": ..., "action": ...}.
     """
-    if not isinstance(diff, Sequence) or isinstance(diff, (str, bytes, bytearray)):
+    if not isinstance(diff, Sequence) or isinstance(
+        diff,
+        (str, bytes, bytearray),
+    ):
         return False
     if not diff:
         return False
@@ -89,6 +92,7 @@ def _is_list_ast(diff) -> bool:
         isinstance(node, Mapping) and "name" in node and "action" in node
         for node in diff
     )
+
 
 
 def _is_cli_mapping_ast(diff) -> bool:
