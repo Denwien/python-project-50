@@ -20,10 +20,25 @@ def format_value(value, depth):
 
 def format_diff_stylish(diff, depth=0):
     """Форматирование списка изменений в stylish"""
+    # Добавим отладочную печать
+    print(f"DEBUG format_diff_stylish: type(diff) = {type(diff)}")
+    print(f"DEBUG format_diff_stylish: diff = {repr(diff)}")
+    
+    # Если diff - строка, попробуем её распарсить
+    if isinstance(diff, str):
+        try:
+            import json
+            diff = json.loads(diff)
+            print(f"DEBUG: parsed diff = {diff}")
+        except:
+            print("DEBUG: cannot parse diff as JSON")
+            return diff  # Вернем как есть
+    
     lines = []
     indent = ' ' * (depth * INDENT)
 
     for item in diff:
+        print(f"DEBUG item: type = {type(item)}, value = {item}")
         action = item['action']
         name = item['name']
 
