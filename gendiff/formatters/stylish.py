@@ -3,20 +3,26 @@ SIGN_INDENT = 2
 
 
 def format_value(value, depth):
-    """Форматирование значения с учётом вложенности"""
+    """Форматирование значения с учётом вложенности."""
     if isinstance(value, dict):
         lines = []
+        # базовый отступ для вложенных ключей внутри словаря
         indent = ' ' * ((depth + 1) * INDENT)
         for k, v in value.items():
             lines.append(f"{indent}{k}: {format_value(v, depth + 1)}")
-        result = "{\n" + "\n".join(lines) + f"\n{' ' * (depth * INDENT)}}}"
-        return result
-    if value is None:
-        return ""
-    if isinstance(value, bool):
-        return str(value).lower()
-    return str(value)
+        # закрывающая скобка на уровне текущей глубины
+        return "{\n" + "\n".join(lines) + f"\n{' ' * (depth * INDENT)}}}"
 
+    if value is None:
+        # Ключевая правка: None должен печататься как "null"
+        return "null"
+
+    if isinstance(value, bool):
+        # true / false в нижнем регистре
+        return str(value).lower()
+
+    # строки, числа и прочее — как есть
+    return str(value)
 
 def format_diff_stylish(diff, depth=0):
     """Форматирование списка изменений в stylish"""
