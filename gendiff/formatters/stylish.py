@@ -45,44 +45,81 @@ def format_diff_stylish(diff, depth: int = 0) -> str:
     lines = ['{']
     base_indent = ' ' * (depth * INDENT)
 
-    for node in diff:
-        key = node['name']
-        action = node['action']
+    # Поддержка двух форматов представления diff:
+    # 1) список узлов с ключами name/action/... (find_diff)
+    # 2) словарь {key: {action: ..., ...}} (builder)
+    if isinstance(diff, dict):
+        for key in sorted(diff.keys()):
+            item = diff[key]
+            action = item['action']
 
-        # Вложенный объект: рекурсивно форматируем children
-        if action == 'nested':
-            children_repr = format_diff_stylish(node['children'], depth + 1)
-            lines.append(f"{base_indent}    {key}: {children_repr}")
-            continue
+            if action == 'nested':
+                children_repr = format_diff_stylish(item['children'], depth + 1)
+                lines.append(f"{base_indent}    {key}: {children_repr}")
+                continue
 
-        # Значение не изменилось
-        if action == 'unchanged':
-            value_repr = _stringify(node['value'], depth + 1)
-            lines.append(f"{base_indent}    {key}: {value_repr}")
-            continue
+            if action == 'unchanged':
+                value_repr = _stringify(item['value'], depth + 1)
+                lines.append(f"{base_indent}    {key}: {value_repr}")
+                continue
 
-        # Ключ был добавлен
-        if action in ('added',):
-            value_repr = _stringify(node['value'], depth + 1)
-            lines.append(f"{base_indent}  + {key}: {value_repr}")
-            continue
+            if action in ('added',):
+                value_repr = _stringify(item['value'], depth + 1)
+                lines.append(f"{base_indent}  + {key}: {value_repr}")
+                continue
 
-        # Ключ был удалён
-        if action in ('removed', 'deleted'):
-            value_repr = _stringify(node['old_value'], depth + 1)
-            lines.append(f"{base_indent}  - {key}: {value_repr}")
-            continue
+            if action in ('removed', 'deleted'):
+                value_repr = _stringify(item['old_value'], depth + 1)
+                lines.append(f"{base_indent}  - {key}: {value_repr}")
+                continue
 
-        # Значение изменилось
-        if action in ('changed', 'modified'):
-            old_repr = _stringify(node['old_value'], depth + 1)
-            new_repr = _stringify(node['new_value'], depth + 1)
-            lines.append(f"{base_indent}  - {key}: {old_repr}")
-            lines.append(f"{base_indent}  + {key}: {new_repr}")
-            continue
+            if action in ('changed', 'modified'):
+                old_repr = _stringify(item['old_value'], depth + 1)
+                new_repr = _stringify(item['new_value'], depth + 1)
+                lines.append(f"{base_indent}  - {key}: {old_repr}")
+                lines.append(f"{base_indent}  + {key}: {new_repr}")
+                continue
 
-        # На случай, если в дереве окажется неизвестный action
-        raise ValueError(f"Unknown action in diff node: {action}")
+            raise ValueError(f"Unknown action in diff node: {action}")
+    else:
+        for node in diff:
+            key = node['name']
+            action = node['action']
+
+            # Вложенный объект: рекурсивно форматируем children
+            if action == 'nested':
+                children_repr = format_diff_stylish(node['children'], depth + 1)
+                lines.append(f"{base_indent}    {key}: {children_repr}")
+                continue
+
+            # Значение не изменилось
+            if action == 'unchanged':
+                value_repr = _stringify(node['value'], depth + 1)
+                lines.append(f"{base_indent}    {key}: {value_repr}")
+                continue
+
+            # Ключ был добавлен
+            if action in ('added',):
+                value_repr = _stringify(node['value'], depth + 1)
+                lines.append(f"{base_indent}  + {key}: {value_repr}")
+                continue
+
+            # Ключ был удалён
+            if action in ('removed', 'deleted'):
+                value_repr = _stringify(node['old_value'], depth + 1)
+                lines.append(f"{base_indent}  - {key}: {value_repr}")
+                continue
+
+            # Значение изменилось
+            if action in ('changed', 'modified'):
+                old_repr = _stringify(node['old_value'], depth + 1)
+                new_repr = _stringify(node['new_value'], depth + 1)
+                lines.append(f"{base_indent}  - {key}: {old_repr}")
+                lines.append(f"{base_indent}  + {key}: {new_repr}")
+                continue
+
+            # На случай, если в дереве окажется неизвестный action
+            raise ValueError(f"Unknown action in diff node: {action}")
 
     closing_indent = ' ' * (depth * INDENT)
     lines.append(f"{closing_indent}}}")
