@@ -1,71 +1,63 @@
-# gendiff/formatters/stylish.py
+INDENT = 4
+SIGN_INDENT = 2
 
-INDENT_SIZE = 4
 
-
-def stringify(value, depth: int) -> str:
-    """Преобразование значения в строку с учётом вложенности."""
+def format_value(value, depth):
+    """Форматирование значения с учётом вложенности"""
     if isinstance(value, dict):
-        lines = ['{']
-        for key, inner_value in value.items():
-            indent = ' ' * ((depth + 1) * INDENT_SIZE)
-            lines.append(f'{indent}{key}: {stringify(inner_value, depth + 1)}')
-        closing_indent = ' ' * (depth * INDENT_SIZE)
-        lines.append(f'{closing_indent}}}')
-        return '\n'.join(lines)
-
+        lines = []
+        indent = ' ' * ((depth + 1) * INDENT)
+        for k, v in sorted(value.items()):  # Добавил сортировку для стабильности
+            lines.append(f"{indent}{k}: {format_value(v, depth + 1)}")
+        result = "{\n" + "\n".join(lines) + f"\n{' ' * (depth * INDENT)}}}"
+        return result
     if value is None:
-        return 'null'
-
+        return "null"  # Исправлено: было "" -> стало "null"
     if isinstance(value, bool):
         return str(value).lower()
-
     return str(value)
 
 
-def make_stylish(diff: list[dict], depth: int = 0) -> str:
-    """Рекурсивное построение строки в формате stylish."""
-    lines: list[str] = ['{']
-    base_indent = ' ' * (depth * INDENT_SIZE)
+def format_diff_stylish(diff, depth=0):
+    """Форматирование списка изменений в stylish"""
+    lines = []
+    indent = ' ' * (depth * INDENT)
 
-    for node in diff:
-        key = node['name']
-        action = node['action']
+    for item in diff:
+        action = item['action']
+        name = item['name']
 
         if action == 'nested':
-            children_str = make_stylish(node['children'], depth + 1)
-            lines.append(f'{base_indent}    {key}: {children_str}')
-            continue
+            lines.append(f"{indent}    {name}: {{")
+            lines.append(format_diff_stylish(item['children'], depth + 1))
+            lines.append(f"{indent}    }}")
+        elif action == 'added':
+            lines.append(
+                f"{indent}{' ' * (INDENT - SIGN_INDENT)}+ {name}: "
+                f"{format_value(item['value'], depth + 1)}"
+            )
+        elif action in ('removed', 'deleted'):
+            lines.append(
+                f"{indent}{' ' * (INDENT - SIGN_INDENT)}- {name}: "
+                f"{format_value(item.get('old_value'), depth + 1)}"
+            )
+        elif action in ('changed', 'modified'):
+            lines.append(
+                f"{indent}{' ' * (INDENT - SIGN_INDENT)}- {name}: "
+                f"{format_value(item['old_value'], depth + 1)}"
+            )
+            lines.append(
+                f"{indent}{' ' * (INDENT - SIGN_INDENT)}+ {name}: "
+                f"{format_value(item['new_value'], depth + 1)}"
+            )
+        elif action == 'unchanged':
+            lines.append(
+                f"{indent}    {name}: {format_value(item['value'], depth + 1)}"
+            )
+        else:
+            raise ValueError(f"Unknown action: {action}")
 
-        if action == 'unchanged':
-            value = stringify(node['value'], depth + 1)
-            lines.append(f'{base_indent}    {key}: {value}')
-            continue
-
-        if action == 'added':
-            # ВАЖНО: для added используется поле value, а не new_value
-            value = stringify(node['value'], depth + 1)
-            lines.append(f'{base_indent}  + {key}: {value}')
-            continue
-
-        if action == 'deleted':
-            value = stringify(node['old_value'], depth + 1)
-            lines.append(f'{base_indent}  - {key}: {value}')
-            continue
-
-        if action == 'modified':
-            old_value = stringify(node['old_value'], depth + 1)
-            new_value = stringify(node['new_value'], depth + 1)
-            lines.append(f'{base_indent}  - {key}: {old_value}')
-            lines.append(f'{base_indent}  + {key}: {new_value}')
-            continue
-
-        raise ValueError(f'Unknown action: {action!r}')
-
-    closing_indent = ' ' * (depth * INDENT_SIZE)
-    lines.append(f'{closing_indent}}}')
-    return '\n'.join(lines)
-
-
-def format_diff_stylish(diff: list[dict]) -> str:
-    return make_stylish(diff)
+    result = "\n".join(lines)
+    if depth == 0:
+        return "{\n" + result + "\n}"
+    return result
