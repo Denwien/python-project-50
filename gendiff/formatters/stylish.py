@@ -37,7 +37,7 @@ def format_diff_stylish(diff, depth=0):
                 f"{indent}{' ' * (INDENT - SIGN_INDENT)}+ {name}: "
                 f"{format_value(item['value'], depth + 1)}",
             )
-        elif action in ("removed", "deleted")
+        elif action in ("removed", "deleted"):
             lines.append(
                 f"{indent}{' ' * (INDENT - SIGN_INDENT)}- {name}: "
                 f"{format_value(item.get('old_value'), depth + 1)}",
