@@ -1,12 +1,12 @@
 # gendiff/scripts/gendiff.py
 import argparse
 
-from gendiff import generate_diff   # БЕРЁМ рабочую функцию из __init__.py
+from gendiff import generate_diff
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Compares two configuration files and shows a difference."
+        description="Compares two configuration files and shows a difference.",
     )
     parser.add_argument("first_file", help="Path to the first file")
     parser.add_argument("second_file", help="Path to the second file")
@@ -16,10 +16,8 @@ def main():
         default="stylish",
         help="Set format of output (stylish, plain, json). Default: stylish",
     )
-
     args = parser.parse_args()
-    result = generate_diff(args.first_file, args.second_file, args.format)
-    print(result)
+    print(generate_diff(args.first_file, args.second_file, args.format))
 
 
 if __name__ == "__main__":
