@@ -23,10 +23,46 @@ def format_diff_stylish(diff, depth=0):
     lines = []
     indent = ' ' * (depth * INDENT)
 
-    # Если diff - словарь, обрабатываем его как корневой узел
-    if isinstance(diff, dict):
+    # Обрабатываем оба случая: список и словарь
+    if isinstance(diff, list):
+        # Старая логика для списка
+        for item in diff:
+            action = item['action']
+            name = item['name']
+
+            if action == 'nested':
+                lines.append(f"{indent}    {name}: {{")
+                lines.append(format_diff_stylish(item['children'], depth + 1))
+                lines.append(f"{indent}    }}")
+            elif action == 'added':
+                lines.append(
+                    f"{indent}{' ' * (INDENT - SIGN_INDENT)}+ {name}: "
+                    f"{format_value(item['value'], depth + 1)}"
+                )
+            elif action in ('removed', 'deleted'):
+                lines.append(
+                    f"{indent}{' ' * (INDENT - SIGN_INDENT)}- {name}: "
+                    f"{format_value(item.get('old_value'), depth + 1)}"
+                )
+            elif action in ('changed', 'modified'):
+                lines.append(
+                    f"{indent}{' ' * (INDENT - SIGN_INDENT)}- {name}: "
+                    f"{format_value(item['old_value'], depth + 1)}"
+                )
+                lines.append(
+                    f"{indent}{' ' * (INDENT - SIGN_INDENT)}+ {name}: "
+                    f"{format_value(item['new_value'], depth + 1)}"
+                )
+            elif action == 'unchanged':
+                lines.append(
+                    f"{indent}    {name}: {format_value(item['value'], depth + 1)}"
+                )
+            else:
+                raise ValueError(f"Unknown action: {action}")
+    
+    elif isinstance(diff, dict):
+        # Новая логика для словаря
         for key, item in sorted(diff.items()):
-            # item теперь содержит всю информацию об изменении
             if isinstance(item, dict) and 'action' in item:
                 action = item['action']
                 name = key
