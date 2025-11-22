@@ -31,7 +31,8 @@ def format_diff_stylish(diff, depth=0):
         if action == "nested":
             lines.append(f"{indent}{' ' * INDENT}{name}: {{")
             lines.append(format_diff_stylish(item["children"], depth + 1))
-            lines.append(f"{indent}{' ' * INDENT}}}")
+            lines.append(f"{indent}    }}")
+
         elif action == "added":
             lines.append(
                 f"{indent}{' ' * (INDENT - SIGN_INDENT)}+ {name}: "
