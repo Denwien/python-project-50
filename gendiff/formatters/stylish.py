@@ -6,59 +6,65 @@ def format_value(value, depth):
     """Форматирование значения с учётом вложенности."""
     if isinstance(value, dict):
         lines = []
-        # базовый отступ для вложенных ключей внутри словаря
-        indent = ' ' * ((depth + 1) * INDENT)
-        for k, v in value.items():
-            lines.append(f"{indent}{k}: {format_value(v, depth + 1)}")
-        # закрывающая скобка на уровне текущей глубины
-        return "{\n" + "\n".join(lines) + f"\n{' ' * (depth * INDENT)}}}"
+        indent = " " * ((depth + 1) * INDENT)
+        for key, val in value.items():
+            lines.append(f"{indent}{key}: {format_value(val, depth + 1)}")
+        closing_indent = " " * (depth * INDENT)
+        return "{\n" + "\n".join(lines) + f"\n{closing_indent}}}"
 
     if value is None:
-        # Ключевая правка: None должен печататься как "null"
+        # None должен печататься как "null"
         return "null"
 
     if isinstance(value, bool):
         # true / false в нижнем регистре
         return str(value).lower()
 
-    # строки, числа и прочее — как есть
+    # строки, числа и прочие типы — через str()
     return str(value)
 
+
 def format_diff_stylish(diff, depth=0):
-    """Форматирование списка изменений в stylish"""
+    """Форматирование списка изменений в формате 'stylish'."""
     lines = []
-    indent = ' ' * (depth * INDENT)
+    indent = " " * (depth * INDENT)
 
     for item in diff:
-        action = item['action']
-        name = item['name']
+        action = item["action"]
+        name = item["name"]
 
-        if action == 'nested':
-            lines.append(f"{indent}    {name}: {{")
-            lines.append(format_diff_stylish(item['children'], depth + 1))
-            lines.append(f"{indent}    }}")
-        elif action in ('added',):
+        if action == "nested":
+            # Узел с дочерними элементами
+            lines.append(f"{indent}{' ' * INDENT}{name}: {{")
+            lines.append(format_diff_stylish(item["children"], depth + 1))
+            lines.append(f"{indent}{' ' * INDENT}}}")
+        elif action == "added":
+            # Добавленное значение
             lines.append(
                 f"{indent}{' ' * (INDENT - SIGN_INDENT)}+ {name}: "
-                f"{format_value(item['value'], depth + 1)}"
+                f"{format_value(item['value'], depth + 1)}",
             )
-        elif action in ('removed', 'deleted'):
+        elif action in ("removed", "deleted"):
+            # Удалённое значение
             lines.append(
                 f"{indent}{' ' * (INDENT - SIGN_INDENT)}- {name}: "
-                f"{format_value(item.get('old_value'), depth + 1)}"
+                f"{format_value(item.get('old_value'), depth + 1)}",
             )
-        elif action in ('changed', 'modified'):
+        elif action in ("changed", "modified"):
+            # Изменённое значение — две строки: старая и новая
             lines.append(
                 f"{indent}{' ' * (INDENT - SIGN_INDENT)}- {name}: "
-                f"{format_value(item['old_value'], depth + 1)}"
+                f"{format_value(item['old_value'], depth + 1)}",
             )
             lines.append(
                 f"{indent}{' ' * (INDENT - SIGN_INDENT)}+ {name}: "
-                f"{format_value(item['new_value'], depth + 1)}"
+                f"{format_value(item['new_value'], depth + 1)}",
             )
-        elif action == 'unchanged':
+        elif action == "unchanged":
+            # Неизменённое значение
             lines.append(
-                f"{indent}    {name}: {format_value(item['value'], depth + 1)}"
+                f"{indent}{' ' * INDENT}{name}: "
+                f"{format_value(item['value'], depth + 1)}",
             )
         else:
             raise ValueError(f"Unknown action: {action}")
