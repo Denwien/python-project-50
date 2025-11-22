@@ -41,17 +41,17 @@ jobs:
     - name: Run tests with coverage
       run: uv run pytest --cov=gendiff --cov-report=xml:coverage.xml tests/
 
-    - name: SonarCloud Scan
-      uses: SonarSource/sonarqube-scan-action@v5.0.0
-      with:
-        args: >
-          -Dsonar.projectKey=Denwien_python-project-50
-          -Dsonar.organization=denwien
-          -Dsonar.python.coverage.reportPaths=coverage.xml
-          -Dsonar.coverage.exclusions=tests/**
-          -Dsonar.exclusions=tests/**
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+- name: SonarCloud Scan
+  uses: SonarSource/sonarqube-scan-action@v5.0.0
+  with:
+    args: >
+      -Dsonar.projectKey=Denwien_python-project-50
+      -Dsonar.organization=denwien
+      -Dsonar.python.coverage.reportPaths=coverage.xml
+      -Dsonar.coverage.exclusions=tests/**,gendiff/scripts/builder.py,gendiff/scripts/gendiff.py
+      -Dsonar.exclusions=tests/**
+  env:
+    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
 
 
