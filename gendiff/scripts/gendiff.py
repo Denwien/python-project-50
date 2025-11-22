@@ -1,26 +1,12 @@
+# gendiff/scripts/gendiff.py
 import argparse
-import json
 
-from gendiff.formatters.stylish import format_diff_stylish
-from gendiff.scripts.builder import build_diff
-from gendiff.scripts.parser import parse_data_from_file as load_file
-
-
-def generate_diff(file_path1, file_path2, format_name="stylish"):
-    data1 = load_file(file_path1)
-    data2 = load_file(file_path2)
-    diff = build_diff(data1, data2)
-
-    if format_name == "stylish":
-        return format_diff_stylish(diff)
-    if format_name == "json":
-        return json.dumps(diff, indent=4)
-    return diff
+from gendiff import generate_diff   # БЕРЁМ рабочую функцию из __init__.py
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Compares two files and shows the difference."
+        description="Compares two configuration files and shows a difference."
     )
     parser.add_argument("first_file", help="Path to the first file")
     parser.add_argument("second_file", help="Path to the second file")
@@ -28,11 +14,12 @@ def main():
         "-f",
         "--format",
         default="stylish",
-        help="Set format of output (default: stylish)",
+        help="Set format of output (stylish, plain, json). Default: stylish",
     )
 
     args = parser.parse_args()
-    print(generate_diff(args.first_file, args.second_file, args.format))
+    result = generate_diff(args.first_file, args.second_file, args.format)
+    print(result)
 
 
 if __name__ == "__main__":
