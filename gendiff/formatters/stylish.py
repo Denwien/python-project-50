@@ -1,67 +1,71 @@
-INDENT_SIZE = 4
+SEPARATOR = " "
+ADD = '+ '
+DEL = '- '
+NONE = '  '
 
 
-def stringify(value, depth):
-    """Форматирование значений с учётом вложенности"""
-    if isinstance(value, dict):
-        lines = ['{']
-        for key, inner_value in sorted(value.items()):
-            indent = ' ' * ((depth + 1) * INDENT_SIZE)
-            lines.append(f"{indent}{key}: {stringify(inner_value, depth + 1)}")
-        closing_indent = ' ' * (depth * INDENT_SIZE)
-        lines.append(f"{closing_indent}}}")
-        return '\n'.join(lines)
+def format_value(value, spaces_count=2):
     if value is None:
-        return 'null'
+        return "null"
     if isinstance(value, bool):
         return str(value).lower()
-    return str(value)
+    if isinstance(value, dict):
+        indent = SEPARATOR * (spaces_count + 4)
+        result_lines = []
+        for key, inner_value in sorted(value.items()):  # Добавил сортировку
+            formatted_value = format_value(inner_value, spaces_count + 4)
+            result_lines.append(f"{indent}{NONE}{key}: {formatted_value}")
+        formatted_string = '\n'.join(result_lines)
+        end_indent = SEPARATOR * (spaces_count + 2)
+        return f"{{\n{formatted_string}\n{end_indent}}}"
+    return str(value)  # Исправил на str(value)
 
 
-def make_stylish(diff, depth=0):
-    """Основная функция форматирования diff в stylish формате"""
-    lines = ['{']
-    base_indent = ' ' * (depth * INDENT_SIZE)
+def make_stylish_diff(diff, spaces_count=2):
+    indent = SEPARATOR * spaces_count
+    lines = []
+    
+    # Обрабатываем оба случая: список и словарь
+    if isinstance(diff, list):
+        # Прямой вызов - список элементов
+        items = diff
+    elif isinstance(diff, dict):
+        # CLI вызов - словарь, преобразуем в список
+        items = []
+        for key, item in sorted(diff.items()):
+            if isinstance(item, dict) and 'action' in item:
+                # Копируем элемент и добавляем имя из ключа
+                modified_item = item.copy()
+                modified_item['name'] = key
+                items.append(modified_item)
+    else:
+        return "{}"
+    
+    for item in items:
+        key = item['name']
+        action = item['action']
+        value = format_value(item.get('value'), spaces_count)
+        old_value = format_value(item.get('old_value'), spaces_count)
+        new_value = format_value(item.get('new_value'), spaces_count)
 
-    for node in diff:
-        key = node['name']
-        action = node['action']
+        if action == "unchanged":
+            lines.append(f"{indent}{NONE}{key}: {value}")
+        elif action == "modified":
+            lines.append(f"{indent}{DEL}{key}: {old_value}")
+            lines.append(f"{indent}{ADD}{key}: {new_value}")
+        elif action == "deleted":
+            lines.append(f"{indent}{DEL}{key}: {old_value}")
+        elif action == "added":
+            lines.append(f"{indent}{ADD}{key}: {value}")  # Исправил на value
+        elif action == 'nested':
+            children = make_stylish_diff(item.get("children"), spaces_count + 4)
+            lines.append(f"{indent}{NONE}{key}: {children}")
+    
+    formatted_string = '\n'.join(lines)
+    end_indent = SEPARATOR * (spaces_count - 2)
 
-        if action == 'nested':
-            children = make_stylish(node['children'], depth + 1)
-            lines.append(f"{base_indent}    {key}: {children}")
-            continue
-
-        if action == 'unchanged':
-            value = stringify(node['value'], depth + 1)
-            lines.append(f"{base_indent}    {key}: {value}")
-            continue
-
-        if action == 'added':
-            value = stringify(node['value'], depth + 1)
-            # ИСПРАВЛЕНИЕ: 2 пробела перед + вместо 4
-            lines.append(f"{base_indent}  + {key}: {value}")
-            continue
-
-        if action == 'deleted':
-            value = stringify(node['old_value'], depth + 1)
-            # ИСПРАВЛЕНИЕ: 2 пробела перед - вместо 4
-            lines.append(f"{base_indent}  - {key}: {value}")
-            continue
-
-        if action == 'modified':
-            old_value = stringify(node['old_value'], depth + 1)
-            new_value = stringify(node['new_value'], depth + 1)
-            # ИСПРАВЛЕНИЕ: 2 пробела перед - и +
-            lines.append(f"{base_indent}  - {key}: {old_value}")
-            lines.append(f"{base_indent}  + {key}: {new_value}")
-            continue
-
-    closing_indent = ' ' * (depth * INDENT_SIZE)
-    lines.append(f"{closing_indent}}}")
-    return '\n'.join(lines)
+    return f"{{\n{formatted_string}\n{end_indent}}}"
 
 
-def format_diff_stylish(diff):
-    """Форматирование списка изменений в stylish формате"""
-    return make_stylish(diff)
+def format_diff_stylish(data):
+    return make_stylish_diff(data)
