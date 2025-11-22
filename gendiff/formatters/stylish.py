@@ -1,53 +1,71 @@
-SEPARATOR = " "
-ADD = '+ '
-DEL = '- '
-NONE = '  '
+# gendiff/formatters/stylish.py
+
+INDENT_SIZE = 4
 
 
-def format_value(value, spaces_count=2):
+def stringify(value, depth: int) -> str:
+    """Преобразование значения в строку с учётом вложенности."""
+    if isinstance(value, dict):
+        lines = ['{']
+        for key, inner_value in value.items():
+            indent = ' ' * ((depth + 1) * INDENT_SIZE)
+            lines.append(f'{indent}{key}: {stringify(inner_value, depth + 1)}')
+        closing_indent = ' ' * (depth * INDENT_SIZE)
+        lines.append(f'{closing_indent}}}')
+        return '\n'.join(lines)
+
     if value is None:
-        return "null"
+        return 'null'
+
     if isinstance(value, bool):
         return str(value).lower()
-    if isinstance(value, dict):
-        indent = SEPARATOR * (spaces_count + 4)
-        result_lines = []
-        for key, inner_value in value.items():
-            formatted_value = format_value(inner_value, spaces_count + 4)
-            result_lines.append(f"{indent}{NONE}{key}: {formatted_value}")
-        formatted_string = '\n'.join(result_lines)
-        end_indent = SEPARATOR * (spaces_count + 2)
-        return f"{{\n{formatted_string}\n{end_indent}}}"
-    return f"{value}"
+
+    return str(value)
 
 
-def make_stylish_diff(diff, spaces_count=2):
-    indent = SEPARATOR * spaces_count
-    lines = []
-    for item in diff:
-        key = item['name']
-        action = item['action']
-        value = format_value(item.get('value'), spaces_count)
-        old_value = format_value(item.get('old_value'), spaces_count)
-        new_value = format_value(item.get('new_value'), spaces_count)
+def make_stylish(diff: list[dict], depth: int = 0) -> str:
+    """Рекурсивное построение строки в формате stylish."""
+    lines: list[str] = ['{']
+    base_indent = ' ' * (depth * INDENT_SIZE)
 
-        if action == "unchanged":
-            lines.append(f"{indent}{NONE}{key}: {value}")
-        elif action == "modified":
-            lines.append(f"{indent}{DEL}{key}: {old_value}")
-            lines.append(f"{indent}{ADD}{key}: {new_value}")
-        elif action == "deleted":
-            lines.append(f"{indent}{DEL}{key}: {old_value}")
-        elif action == "added":
-            lines.append(f"{indent}{ADD}{key}: {new_value}")
-        elif action == 'nested':
-            children = make_stylish_diff(item.get("children"), spaces_count + 4)
-            lines.append(f"{indent}{NONE}{key}: {children}")
-    formatted_string = '\n'.join(lines)
-    end_indent = SEPARATOR * (spaces_count - 2)
+    for node in diff:
+        key = node['name']
+        action = node['action']
 
-    return f"{{\n{formatted_string}\n{end_indent}}}"
+        if action == 'nested':
+            children_str = make_stylish(node['children'], depth + 1)
+            lines.append(f'{base_indent}    {key}: {children_str}')
+            continue
+
+        if action == 'unchanged':
+            value = stringify(node['value'], depth + 1)
+            lines.append(f'{base_indent}    {key}: {value}')
+            continue
+
+        if action == 'added':
+            # ВАЖНО: для added используется поле value, а не new_value
+            value = stringify(node['value'], depth + 1)
+            lines.append(f'{base_indent}  + {key}: {value}')
+            continue
+
+        if action == 'deleted':
+            value = stringify(node['old_value'], depth + 1)
+            lines.append(f'{base_indent}  - {key}: {value}')
+            continue
+
+        if action == 'modified':
+            old_value = stringify(node['old_value'], depth + 1)
+            new_value = stringify(node['new_value'], depth + 1)
+            lines.append(f'{base_indent}  - {key}: {old_value}')
+            lines.append(f'{base_indent}  + {key}: {new_value}')
+            continue
+
+        raise ValueError(f'Unknown action: {action!r}')
+
+    closing_indent = ' ' * (depth * INDENT_SIZE)
+    lines.append(f'{closing_indent}}}')
+    return '\n'.join(lines)
 
 
-def format_diff_stylish(data):
-    return make_stylish_diff(data)
+def format_diff_stylish(diff: list[dict]) -> str:
+    return make_stylish(diff)
