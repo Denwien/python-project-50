@@ -79,7 +79,7 @@ def _make_stylish(nodes, depth: int = 0) -> str:
 def _is_list_ast(diff) -> bool:
     """
     Проверяет, является ли diff списком нод формата:
-    {"name": ..., "action": ...}.
+    {'name': ..., 'action': ...}.
     """
     if not isinstance(diff, Sequence) or isinstance(
         diff,
@@ -94,12 +94,11 @@ def _is_list_ast(diff) -> bool:
     )
 
 
-
 def _is_cli_mapping_ast(diff) -> bool:
     """
     Проверяет, является ли diff "словарием нод" формата, который использует CLI:
     {
-        key: { "action": ..., ... },
+        key: {'action': ..., ...},
         ...
     }
     """
@@ -156,7 +155,7 @@ def format_diff_stylish(diff, depth: int = 0) -> str:
     if isinstance(diff, str):
         return diff
 
-    # Список нод
+    # Список нод (основной AST из библиотеки)
     if _is_list_ast(diff):
         return _make_stylish(diff, depth)
 
