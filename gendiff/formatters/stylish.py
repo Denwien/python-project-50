@@ -1,26 +1,25 @@
-INDENT = 2
-SIGN_INDENT = 2
+INDENT = 4
+SIGN_INDENT = 2  # оставим, даже если сейчас не используем — на логику не влияет
 
 
-def _stringify(value, depth: int, extra_indent: int = 0) -> str:
+def _stringify(value, depth: int) -> str:
     """
-    Преобразует значение в строку с учётом вложенности без фигурных скобок.
-    - dict -> блок со следующей строкой и дочерними ключами с увеличенным отступом
+    Преобразует значение в строку с учётом вложенности.
+
+    - словари выводим многострочно в "коробке" { ... }
     - None -> 'null'
-    - bool -> 'true'/'false'
-    - иные типы -> str(value)
+    - bool -> 'true' / 'false'
+    - остальные типы -> str(value)
     """
     if isinstance(value, dict):
-        lines = []
-        indent = ' ' * ((depth + 1) * INDENT + extra_indent)
-        for k, v in value.items():
-            rendered = _stringify(v, depth + 1)
-            if isinstance(v, dict):
-                lines.append(f"{indent}{k}:{rendered}")
-            else:
-                lines.append(f"{indent}{k}: {rendered}")
-        # Возвращаем с переводом строки, чтобы родитель мог поставить двоеточие
-        return "\n" + "\n".join(lines)
+        lines = ['{']
+        # сортировка ключей, чтобы порядок был стабильным
+        for key, inner_value in sorted(value.items()):
+            indent = ' ' * ((depth + 1) * INDENT)
+            lines.append(f"{indent}{key}: {_stringify(inner_value, depth + 1)}")
+        closing_indent = ' ' * (depth * INDENT)
+        lines.append(f"{closing_indent}}}")
+        return '\n'.join(lines)
 
     if value is None:
         return 'null'
@@ -32,65 +31,60 @@ def _stringify(value, depth: int, extra_indent: int = 0) -> str:
 
 
 def format_diff_stylish(diff, depth: int = 0) -> str:
-    """Форматирование diff-дерева в стиль без фигурных скобок."""
-    lines = []
+    """
+    Форматирование АСТ различий в стиль stylish.
+
+    diff — список узлов вида:
+    {
+        "name": str,
+        "action": "nested" | "added" | "deleted" | "removed"
+                  | "changed" | "modified" | "unchanged",
+        ... значения зависят от action ...
+    }
+    """
+    lines = ['{']
     base_indent = ' ' * (depth * INDENT)
 
     for node in diff:
         key = node['name']
         action = node['action']
 
+        # Вложенный объект: рекурсивно форматируем children
         if action == 'nested':
-            lines.append(f"{base_indent}{key}:")
-            lines.append(format_diff_stylish(node['children'], depth + 1))
+            children_repr = format_diff_stylish(node['children'], depth + 1)
+            lines.append(f"{base_indent}    {key}: {children_repr}")
             continue
 
+        # Значение не изменилось
         if action == 'unchanged':
-            value = node['value']
-            rendered = _stringify(value, depth)
-            if isinstance(value, dict):
-                lines.append(f"{base_indent}{key}:{rendered}")
-            else:
-                lines.append(f"{base_indent}{key}:{'' if rendered == '' else ' ' + rendered}")
+            value_repr = _stringify(node['value'], depth + 1)
+            lines.append(f"{base_indent}    {key}: {value_repr}")
             continue
 
+        # Ключ был добавлен
         if action in ('added',):
-            value = node['value']
-            rendered = _stringify(value, depth)
-            sign_indent = base_indent
-            if isinstance(value, dict):
-                lines.append(f"{sign_indent}+ {key}:{rendered}")
-            else:
-                lines.append(f"{sign_indent}+ {key}:{'' if rendered == '' else ' ' + rendered}")
+            value_repr = _stringify(node['value'], depth + 1)
+            lines.append(f"{base_indent}  + {key}: {value_repr}")
             continue
 
+        # Ключ был удалён
         if action in ('removed', 'deleted'):
-            value = node.get('old_value')
-            rendered = _stringify(value, depth)
-            sign_indent = base_indent
-            if isinstance(value, dict):
-                lines.append(f"{sign_indent}- {key}:{rendered}")
-            else:
-                lines.append(f"{sign_indent}- {key}:{'' if rendered == '' else ' ' + rendered}")
+            value_repr = _stringify(node['old_value'], depth + 1)
+            lines.append(f"{base_indent}  - {key}: {value_repr}")
             continue
 
+        # Значение изменилось
         if action in ('changed', 'modified'):
-            old_value = node['old_value']
-            new_value = node['new_value']
-            old_rendered = _stringify(old_value, depth, SIGN_INDENT if isinstance(old_value, dict) else 0)
-            new_rendered = _stringify(new_value, depth, SIGN_INDENT if isinstance(new_value, dict) else 0)
-            sign_indent = base_indent
-            if isinstance(old_value, dict):
-                lines.append(f"{sign_indent}- {key}:{old_rendered}")
-            else:
-                lines.append(f"{sign_indent}- {key}:{'' if old_rendered == '' else ' ' + old_rendered}")
-            if isinstance(new_value, dict):
-                lines.append(f"{sign_indent}+ {key}:{new_rendered}")
-            else:
-                lines.append(f"{sign_indent}+ {key}:{'' if new_rendered == '' else ' ' + new_rendered}")
+            old_repr = _stringify(node['old_value'], depth + 1)
+            new_repr = _stringify(node['new_value'], depth + 1)
+            lines.append(f"{base_indent}  - {key}: {old_repr}")
+            lines.append(f"{base_indent}  + {key}: {new_repr}")
             continue
 
+        # На случай, если в дереве окажется неизвестный action
         raise ValueError(f"Unknown action in diff node: {action}")
 
-    return "\n".join(lines)
+    closing_indent = ' ' * (depth * INDENT)
+    lines.append(f"{closing_indent}}}")
+    return '\n'.join(lines)
 
